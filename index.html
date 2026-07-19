@@ -12,6 +12,7 @@
     
     <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/48/000000/wizard.png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/wizard.png">
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -535,6 +536,17 @@
             setupEventListeners();
             loadSavedPreferences();
             renderVirtualKeyboard();
+            registerServiceWorker();
+        }
+
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                        .catch(err => console.log('Service Worker registration failed:', err));
+                });
+            }
         }
 
         function setupEventListeners() {
