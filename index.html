@@ -413,7 +413,7 @@
          * State & Config
          */
         const CONFIG = {
-            HASH: 'NjY2', // Base64 for "666"
+            HASH: 'e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919614', // SHA-256 for "666"
             COURSE_DATA: {
                 newConcept: [
                     { text: "Unit 1 Lesson 1", value: "data/unit1_lesson1.csv" },
@@ -621,9 +621,18 @@
             el.localFileInp.addEventListener('change', e => handleFileSelect(e.target));
         }
 
-        function verifyPassword() {
+        async function sha256(str) {
+            const buffer = new TextEncoder().encode(str);
+            const hash = await crypto.subtle.digest('SHA-256', buffer);
+            return Array.from(new Uint8Array(hash))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        async function verifyPassword() {
             const input = el.passInp.value;
-            if (btoa(input) === CONFIG.HASH) {
+            const inputHash = await sha256(input);
+            if (inputHash === CONFIG.HASH) {
                 getAudioContext();
                 el.audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
                 el.audio.play().then(() => {
