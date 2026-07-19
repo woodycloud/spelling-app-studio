@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Xinyi SpellQuest</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Xinyi SpellQuest">
+    
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluent/48/000000/wizard.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/wizard.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        iosBg: { light: '#f4f4f9', dark: '#0a0a0c' },
+                        iosCard: { light: 'rgba(255, 255, 255, 0.65)', dark: 'rgba(20, 20, 25, 0.65)' },
+                        iosText: { light: '#1c1c1e', dark: '#f5f5f7' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+        input, textarea, [contenteditable="true"] {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+            /* 优化：加大顶部间距，避开全面屏顶部刘海/灵动岛及边缘触控死角 */
+            padding-top: calc(env(safe-area-inset-top) + 24px); 
+            background: radial-gradient(circle at 50% 0%, rgba(0, 122, 255, 0.08), transparent 60%), 
+                        radial-gradient(circle at 10% 100%, rgba(52, 199, 89, 0.05), transparent 40%),
+                        #f4f4f9;
+            transition: background 0.4s cubic-bezier(0.25, 1, 0.5, 1), color 0.3s ease;
+        }
+        
+        .dark body {
+            background: radial-gradient(circle at 50% 0%, rgba(0, 122, 255, 0.12), transparent 50%), 
+                        radial-gradient(circle at 90% 100%, rgba(255, 59, 48, 0.05), transparent 40%),
+                        #0a0a0c;
+        }
+
+        html, body { position: relative; overflow: hidden; height: 100%; -webkit-overflow-scrolling: touch; }
+        
+        /* iOS High-Fidelity Glassmorphism */
+        .ios-depth {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(30px) saturate(210%);
+            -webkit-backdrop-filter: blur(30px) saturate(210%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04),
+                        0 1px 2px 0 rgba(0, 0, 0, 0.02),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+        }
+        .dark .ios-depth {
+            background: rgba(20, 20, 25, 0.75);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6),
+                        0 1px 0px 0 rgba(255, 255, 255, 0.03),
+                        inset 0 1px 0px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* 优化：为下拉框触发器增加一层隐形防错手热区 */
+        #unitSelectorTrigger::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            bottom: -10px;
+            left: -10px;
+            right: -10px;
+            z-index: 1;
+        }
+
+        /* 3D Elastic Card with Safari Flicker Fix */
+        .card-perspective {
+            perspective: 2000px;
+            -webkit-perspective: 2000px;
+            position: relative;
+            flex-grow: 1; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            width: 100%;
+            touch-action: none; /* Prevent scrolling during swipe gestures on the card */
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-height: 380px; 
+            min-height: 300px;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            -webkit-transition: -webkit-transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            will-change: transform;
+        }
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 28px;
+            box-sizing: border-box;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            -webkit-transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        
+        .card-front { 
+            transform: rotateY(0deg); 
+            z-index: 2; 
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .card-back { 
+            transform: rotateY(180deg); 
+            z-index: 1; 
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* iOS Safari Fix: Toggle opacity and pointer-events dynamically to prevent backdrop-filter bleeding and click-throughs */
+        .card-inner.is-flipped .card-front {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .card-inner.is-flipped .card-back {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            z-index: 3; /* Ensure flipped card-back is fully interactive */
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, rgba(229, 229, 234, 0.3) 25%, rgba(242, 242, 247, 0.6) 50%, rgba(229, 229, 234, 0.3) 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.6s infinite;
+        }
+        .dark .shimmer {
+            background: linear-gradient(90deg, rgba(58, 58, 60, 0.3) 25%, rgba(72, 72, 74, 0.6) 50%, rgba(58, 58, 60, 0.3) 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes loading-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .progress-container { width: 100%; background-color: rgba(0, 0, 0, 0.05); border-radius: 999px; height: 5px; overflow: hidden; }
+        .dark .progress-container { background-color: rgba(255, 255, 255, 0.08); }
+        .progress-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #007aff, #34a8ff); transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .shake { animation: ios-shake 0.45s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes ios-shake { 15%, 85% { transform: translate3d(-3px, 0, 0); } 30%, 70% { transform: translate3d(4px, 0, 0); } 45%, 65% { transform: translate3d(-5px, 0, 0); } 60% { transform: translate3d(5px, 0, 0); } }
+        
+        .celebrate { animation: ios-scale 0.5s cubic-bezier(0.25, 1.35, 0.5, 1); }
+        @keyframes ios-scale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+        
+        @keyframes letter-pop {
+            0% { transform: scale(0.8) translateY(4px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .letter-pop { animation: letter-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .ghost-input { position: absolute; top: -9999px; left: -9999px; opacity: 0; }
+        
+        #virtualKeyboard button { transition: background-color 0.1s ease, transform 0.1s ease; }
+        #virtualKeyboard button:active { background-color: rgba(0, 0, 0, 0.15) !important; transform: scale(0.95); }
+        .dark #virtualKeyboard button:active { background-color: rgba(255, 255, 255, 0.15) !important; }
+
+        @media (min-width: 768px) {
+            #virtualKeyboard { max-width: 480px; margin-left: auto; margin-right: auto; }
+        }
+    </style>
+</head>
+<body class="text-iosText-light dark:text-iosText-dark min-h-screen p-3 flex flex-col items-center justify-center">
+
+    <button id="globalThemeBtn" class="fixed top-6 right-3 z-50 p-2 bg-white/70 dark:bg-black/30 backdrop-blur-xl rounded-full shadow-lg border border-white/20 dark:border-white/5 active:scale-90 transition-all duration-200">
+        <span class="dark:hidden text-lg">🌙</span>
+        <span class="hidden dark:inline text-lg">☀️</span>
+    </button>
+
+    <!-- Password Screen -->
+    <div id="passwordScreen" class="w-full max-w-sm bg-white/50 dark:bg-[#141419]/50 backdrop-blur-3xl p-8 my-auto rounded-[32px] ios-depth text-center border border-white/40 dark:border-white/5 transition-all">
+        <div class="text-6xl mb-5 drop-shadow-md animate-bounce">🔑</div>
+        <h2 class="text-2xl font-bold tracking-tight mb-1">Xinyi SpellQuest</h2>
+        <p class="text-gray-500 dark:text-gray-400 text-xs font-semibold tracking-wide mb-6 uppercase">Please type the passkey</p>
+        <input type="password" id="sitePassword" class="w-full p-4 bg-black/[0.03] dark:bg-white/[0.03] rounded-2xl text-center text-2xl tracking-widest focus:bg-white/90 dark:focus:bg-black/90 focus:ring-4 focus:ring-[#007aff]/30 mb-5 transition-all border border-black/5 dark:border-white/5 placeholder-gray-400" placeholder="••••••">
+        <button id="loginBtn" class="w-full bg-[#007aff] hover:bg-[#0a84ff] text-white py-4 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98] shadow-lg shadow-[#007aff]/20">Explore the world</button>
+        <p id="passwordError" class="text-[#ff453a] text-xs font-semibold mt-3 hidden">⚠️ Wrong passkey，Try again</p>
+    </div>
+
+    <!-- Main Game UI -->
+    <div id="gameContent" class="w-full max-w-md hidden html-down hidden flex flex-col flex-1 justify-center h-full overflow-hidden">
+        
+        <!-- 优化：增加 mt-3（上外边距），使 header 整体在视觉和结构上下移，避开系统触控死角 -->
+        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl sticky top-0 z-40 border border-white/30 dark:border-white/5 py-2.5 px-3 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-3 mb-2 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                <svg class="w-7 h-7 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                    <path d="M40,90 C40,40 160,40 160,90 L170,110 C140,115 60,115 30,110 Z" fill="#a1887f"/>
+                    <ellipse cx="100" cy="110" rx="75" ry="10" fill="#8d6e63"/>
+                    <circle cx="100" cy="125" r="30" fill="#ffcc80"/>
+                    <circle cx="90" cy="120" r="3" fill="#333"/>
+                    <circle cx="110" cy="120" r="3" fill="#333"/>
+                    <path d="M92,130 Q100,140 108,130" fill="none" stroke="#ff7043" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M68,120 Q65,145 75,145 M132,120 Q135,145 125,145" fill="none" stroke="#5d4037" stroke-width="8" stroke-linecap="round"/>
+                    <g transform="translate(145, 140) rotate(-35)">
+                        <rect x="-3" y="-20" width="6" height="30" rx="2" fill="#81d4fa"/>
+                        <polygon points="0,-28 -4,-20 4,-20" fill="#fff59d"/>
+                        <circle cx="0" cy="-32" r="4" fill="#e0f7fa" opacity="0.8"/>
+                    </g>
+                    <g font-family="Arial, sans-serif" font-weight="bold" font-size="22" text-anchor="middle">
+                        <text x="50" y="55" fill="#4285f4" transform="rotate(-15 50 55)">A</text>
+                        <text x="100" y="35" fill="#ea4335">B</text>
+                        <text x="150" y="55" fill="#fabc05" transform="rotate(15 150 55)">C</text>
+                    </g>
+                </svg>
+                <h1 class="text-xs font-bold tracking-tight text-left truncate">SpellQuest</h1>
+            </div>
+            
+            <div id="unitSelectorTrigger" class="relative flex items-center justify-center bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-200 px-3 py-1.5 rounded-xl text-[10px] font-bold text-center cursor-pointer max-w-[160px] flex-1 mx-1.5 border border-black/[0.02] dark:border-white/[0.02] z-50">
+                <span id="activeUnitName" class="truncate pr-3 text-gray-800 dark:text-gray-200 relative z-20">正在加载...</span>
+                <span class="absolute right-2 text-[7px] opacity-40 z-20">▼</span>
+                <select id="unitSelector" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-30"></select>
+            </div>
+            
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <div class="flex flex-col items-end pr-0.5 justify-center">
+                    <span id="navProgress" class="text-[10px] font-extrabold text-[#007aff] dark:text-[#0a84ff]">0%</span>
+                </div>
+                <button id="themeToggleBtn" class="p-1.5 bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] rounded-lg active:scale-90 transition">
+                    <span class="dark:hidden text-xs">🌙</span>
+                    <span class="hidden dark:inline text-xs">☀️</span>
+                </button>
+            </div>
+        </header>
+        
+        <div class="w-full flex flex-col gap-1.5 mb-2 bg-white/30 dark:bg-black/15 backdrop-blur-2xl p-2 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-white/20 dark:border-white/5 flex-shrink-0">
+            <div class="flex gap-1.5 items-center">
+                <div class="relative flex-1 bg-black/[0.04] dark:bg-white/[0.04] rounded-xl px-1.5 border border-black/[0.01] dark:border-white/[0.01]">
+                    <select id="groupSelector" class="w-full py-1.5 bg-transparent rounded-xl text-[11px] font-bold cursor-pointer text-center appearance-none text-iosText-light dark:text-iosText-dark">
+                        <option value="newConcept">🎒 少儿新概念</option>
+                        <option value="schoolClass">🏫 学校课堂组</option>
+                        <option value="ieltsClass">🗽 雅思词汇</option>
+                    </select>
+                </div>
+                <button id="resetProgressBtn" class="text-[9px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#ff453a] px-2.5 py-1.5 bg-white/40 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] rounded-xl shadow-sm transition-all flex-shrink-0 active:scale-95">🔄 重置单元</button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-1.5 items-center">
+                <div class="bg-black/[0.03] dark:bg-white/[0.03] py-1 px-2 rounded-xl flex items-center justify-between border border-black/[0.01] dark:border-white/[0.01] h-[26px]">
+                    <span class="text-[8px] font-semibold text-gray-500 dark:text-gray-400">口音</span>
+                    <div class="flex gap-2">
+                        <label class="flex items-center gap-1 text-[10px] font-semibold cursor-pointer">
+                            <input type="radio" name="accentType" value="2" checked class="w-3 h-3 accent-[#007aff]"> 美
+                        </label>
+                        <label class="flex items-center gap-1 text-[10px] font-semibold cursor-pointer">
+                            <input type="radio" name="accentType" value="1" class="w-3 h-3 accent-[#007aff]"> 英
+                        </label>
+                    </div>
+                </div>
+
+                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-xl h-[26px]">
+                    <div id="segment-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-white dark:bg-[#1c1c1e] rounded-[8px] shadow-md transition-transform duration-300 ease-out z-0"></div>
+                    <button id="mode-spell-btn" class="flex-1 rounded-[8px] font-bold text-[10px] transition-colors duration-200 text-iosText-light dark:text-iosText-dark relative z-10">拼读挑战</button>
+                    <button id="mode-card-btn" class="flex-1 rounded-[8px] font-medium text-[10px] transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">卡片背诵</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainCard" class="card-perspective my-1">
+            <div id="cardInner" class="card-inner">
+                
+                <div class="card-front bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-4 rounded-[28px] ios-depth">
+                    <div>
+                        <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
+                            <span id="progressTitle">冒险进度</span>
+                            <span id="progressText" class="text-[#007aff] font-bold">0%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-black/[0.02] dark:bg-white/[0.02] rounded-2xl text-center flex-1 flex flex-col justify-between items-center min-h-[140px] max-h-[190px] relative border border-black/[0.04] dark:border-white/[0.04] shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_12px_rgba(0,0,0,0.2)] my-2 overflow-hidden">
+                        
+                        <div class="flex items-center justify-center gap-3 w-full h-[64px] flex-shrink-0">
+                            <div id="emoji" class="text-4xl filter drop-shadow-md flex-shrink-0 transition-transform duration-300 hover:scale-110">🍎</div>
+                            <div id="netImageContainer" class="hidden relative w-[54px] h-[54px] rounded-[12px] overflow-hidden bg-white/80 dark:bg-black/40 shadow-md border border-black/5 dark:border-white/5 flex-shrink-0">
+                                <div id="imageShimmer" class="shimmer absolute inset-0 z-10"></div>
+                                <img id="netImage" src="" class="opacity-0 transition-opacity duration-300 z-20 block w-full h-full object-cover absolute top-0 left-0" alt="illustration">
+                            </div>
+                        </div>
+                        
+                        <div id="spellHintArea" class="h-[24px] flex items-center justify-center w-full flex-shrink-0">
+                            <div id="descContainer" class="hidden flex flex-col items-center">
+                                <span id="desc" class="text-xs font-bold text-gray-800 dark:text-gray-100 truncate max-w-[280px]">正在加载...</span>
+                                <span id="phonetic" class="text-[9px] text-[#007aff] dark:text-[#0a84ff] font-mono tracking-wide leading-none mt-0.5"></span>
+                            </div>
+                            <button id="hintBtn" class="text-[9px] font-bold text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-white/[0.04] border border-black/5 dark:border-white/5 px-3 py-1 rounded-full shadow-sm active:scale-95 transition-all">显示中文提示</button>
+                        </div>
+
+                        <div id="letterSlots" class="flex justify-center flex-wrap gap-1 text-lg font-bold tracking-wide h-[32px] w-full px-1 items-end overflow-hidden mb-1"></div>
+                    </div>
+
+                    <div id="spellActionButtons" class="grid grid-cols-2 gap-2 mt-auto">
+                        <button id="speakBtn" class="bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] text-[#007aff] py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1 active:scale-[0.98] transition-all border border-black/[0.02] dark:border-white/[0.02]"><span>听发音 🔊</span></button>
+                        <button id="checkBtn" class="bg-[#007aff] hover:bg-[#0a84ff] text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-[#007aff]/15 active:scale-[0.98] transition-all">检查结果</button>
+                    </div>
+
+                    <div id="cardFrontActionButtons" class="hidden mt-auto">
+                        <button id="showAnswerBtn" class="w-full bg-[#007aff] hover:bg-[#0a84ff] text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-[#007aff]/15 transition active:scale-95">
+                            👀 显示答案 (Show Answer)
+                        </button>
+                        <p class="text-center text-[8px] text-gray-400 dark:text-gray-500 mt-1">点击卡片或按空格键翻转</p>
+                    </div>
+                </div>
+
+                <div class="card-back bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-4 rounded-[28px] ios-depth">
+                    <div>
+                        <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
+                            <span>卡片解读</span>
+                            <span id="cardProgressText" class="text-[#34c759] font-bold">掌握中</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 100%; background: #34c759;"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-black/[0.02] dark:bg-white/[0.02] rounded-2xl text-center flex-1 flex flex-col justify-center items-center min-h-[140px] max-h-[190px] border border-black/[0.04] dark:border-white/[0.04] shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_12px_rgba(0,0,0,0.2)] my-2">
+                        <div id="cardWord" class="text-2xl font-extrabold tracking-tight text-iosText-light dark:text-iosText-dark"></div>
+                        <div id="cardPhonetic" class="text-[10px] text-[#007aff] dark:text-[#0a84ff] font-mono mt-0.5"></div>
+                        <div id="cardDesc" class="text-base text-gray-800 dark:text-gray-100 font-bold mt-2"></div>
+                    </div>
+
+                    <div id="ankiGradingButtons" class="grid grid-cols-3 gap-2 mt-auto">
+                        <button data-level="again" class="anki-btn bg-[#ff453a]/10 hover:bg-[#ff453a]/15 text-[#ff453a] py-2 rounded-xl font-bold text-xs transition border border-[#ff453a]/15 active:scale-95 flex flex-col items-center">
+                            <span>🔴 重来</span>
+                            <span class="text-[7px] font-medium opacity-60 mt-0.5">Again [1]</span>
+                        </button>
+                        <button data-level="good" class="anki-btn bg-[#ff9f0a]/10 hover:bg-[#ff9f0a]/15 text-[#ff9f0a] py-2 rounded-xl font-bold text-xs transition border border-[#ff9f0a]/15 active:scale-95 flex flex-col items-center">
+                            <span>🟡 一般</span>
+                            <span class="text-[7px] font-medium opacity-60 mt-0.5">Good [2]</span>
+                        </button>
+                        <button data-level="easy" class="anki-btn bg-[#30d158]/10 hover:bg-[#30d158]/15 text-[#30d158] py-2 rounded-xl font-bold text-xs transition border border-[#30d158]/15 active:scale-95 flex flex-col items-center">
+                            <span>🟢 简单</span>
+                            <span class="text-[7px] font-medium opacity-60 mt-0.5">Easy [3]</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <button id="reviewWrongBtn" class="w-full bg-[#ff453a]/90 hover:bg-[#ff453a] text-white py-2 rounded-xl font-bold text-xs hidden shadow-md shadow-[#ff453a]/10 active:scale-95 transition-all mb-1 flex-shrink-0">温习错题库 (0)</button>
+
+        <div id="localDropZone" class="hidden p-2.5 mb-1 border border-dashed border-black/20 dark:border-white/20 bg-white/40 dark:bg-white/[0.02] rounded-xl text-[9px] font-semibold text-gray-500 cursor-pointer w-full text-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition flex-shrink-0">
+            请点击此处手动导入本地词库 CSV 文件
+            <input type="file" id="localFileInp" class="hidden" accept=".csv">
+        </div>
+
+        <input type="text" id="userInput" class="ghost-input" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" inputmode="text">
+        
+        <div id="virtualKeyboard" class="w-full bg-[#d1d1d6]/50 dark:bg-[#1a1a20]/60 backdrop-blur-3xl p-1 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col gap-1 flex-shrink-0">
+            <div class="flex justify-center gap-1" id="kbd-row1"></div>
+            <div class="flex justify-center gap-1" id="kbd-row2"></div>
+            <div class="flex justify-center gap-1" id="kbd-row3"></div>
+        </div>
+    </div>
+
+    <div id="iosToast" class="fixed bottom-1/3 left-1/2 -translate-x-1/2 bg-black/85 dark:bg-white/95 text-white dark:text-black text-xs font-bold px-5 py-3 rounded-2xl shadow-xl backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 z-50">提示</div>
+
+    <audio id="globalAudioPlayer" style="display: none;"></audio>
+
+    <script>
+        /**
+         * State & Config
+         */
+        const CONFIG = {
+            HASH: 'NjY2', // Base64 for "666"
+            COURSE_DATA: {
+                newConcept: [
+                    { text: "Unit 1 Lesson 1", value: "data/unit1_lesson1.csv" },
+                    { text: "Unit 1 Lesson 2", value: "data/unit1_lesson2.csv" },
+                    { text: "Unit 2 Lesson 3", value: "data/unit2_lesson3.csv" },
+                    { text: "Unit 2 Lesson 4", value: "data/unit2_lesson4.csv" },
+                    { text: "Unit 3 Lesson 5", value: "data/unit3_lesson5.csv" },
+                    { text: "Unit 3 Lesson 6", value: "data/unit3_lesson6.csv" },
+                    { text: "Unit 4 Lesson 7", value: "data/unit4_lesson7.csv" },
+                    { text: "Unit 5 Lesson 9", value: "data/unit5_lesson9.csv" },
+                    { text: "Unit 5 Lesson 10", value: "data/unit5_lesson10.csv" },
+                    { text: "Unit 6 Lesson 11", value: "data/unit6_lesson11.csv" },
+                    { text: "Unit 6 Lesson 12", value: "data/unit6_lesson12.csv" },
+                    { text: "Unit 7 Lesson 13", value: "data/unit7_lesson13.csv" }
+                ],
+                schoolClass: [
+                    { text: "课堂组 Unit 1", value: "data/school_unit1.csv" },
+                    { text: "课堂组 Unit 2", value: "data/school_unit2.csv" },
+                    { text: "课堂组 Unit 3", value: "data/school_unit3.csv" },
+                    { text: "课堂组 Unit 4", value: "data/school_unit4.csv" },
+                    { text: "课堂组 Unit 5", value: "data/school_unit5.csv" },
+                    { text: "课堂组 Unit 6", value: "data/school_unit6.csv" },
+                    { text: "课堂组 Unit 7", value: "data/school_unit7.csv" },
+                    { text: "课堂组 Unit 8", value: "data/school_unit8.csv" },
+                    { text: "课堂组 months", value: "data/school_months.csv" },
+                    { text: "课堂组 Cardinal numbers", value: "data/school_cardinal_numbers.csv" },
+                    { text: "课堂组 Ordinal numbers", value: "data/school_ordinal_numbers.csv" }
+                ],
+                ieltsClass: [
+                    { text: "ives_Business_Economy", value: "data/ives_Business_Economy.csv" },
+                    { text: "ives_Education_Learning", value: "data/ives_Education_Learning.csv" },
+                    { text: "ives_Emotions_Abstract", value: "data/ives_Emotions_Abstract.csv" },
+                    { text: "ives_Environment_Nature", value: "data/ives_Environment_Nature.csv" },
+                    { text: "ives_Health_Body", value: "data/ives_Health_Body.csv" },
+                    { text: "ives_Science_Technology", value: "data/ives_Science_Technology.csv" },
+                    { text: "ives_Society_People", value: "data/ives_Society_People.csv" },
+                    { text: "ives_Travel_Transport", value: "data/ives_Travel_Transport.csv" }
+                ] 
+            },
+            KBD_ROWS: [
+                ["Q","W","E","R","T","Y","U","I","O","P"],
+                ["A","S","D","F","G","H","J","K","L"],
+                ["Z","X","C","V","B","N","M", "⌫"]
+            ]
+        };
+
+        const state = {
+            currentInputValue: "",
+            maxLetters: 0,
+            mode: 'spell', 
+            side: 'front',
+            wordBank: [],
+            wrongWords: [],
+            masteredWords: new Set(),
+            currentIndex: 0,
+            isReviewMode: false,
+            imgRetryCount: 0,
+            touch: { x: 0, y: 0 },
+            isTrans: false 
+        };
+
+        const el = {
+            loginBtn: document.getElementById('loginBtn'),
+            passInp: document.getElementById('sitePassword'),
+            passScreen: document.getElementById('passwordScreen'),
+            gameContent: document.getElementById('gameContent'),
+            unitSelector: document.getElementById('unitSelector'),
+            groupSelector: document.getElementById('groupSelector'),
+            activeUnitName: document.getElementById('activeUnitName'),
+            cardInner: document.getElementById('cardInner'),
+            userInput: document.getElementById('userInput'),
+            letterSlots: document.getElementById('letterSlots'),
+            netImage: document.getElementById('netImage'),
+            netImageContainer: document.getElementById('netImageContainer'),
+            imageShimmer: document.getElementById('imageShimmer'),
+            emoji: document.getElementById('emoji'),
+            desc: document.getElementById('desc'),
+            descContainer: document.getElementById('descContainer'),
+            hintBtn: document.getElementById('hintBtn'),
+            phonetic: document.getElementById('phonetic'),
+            progressBar: document.getElementById('progressBar'),
+            progressText: document.getElementById('progressText'),
+            navProgress: document.getElementById('navProgress'),
+            reviewBtn: document.getElementById('reviewWrongBtn'),
+            audio: document.getElementById('globalAudioPlayer'),
+            globalThemeBtn: document.getElementById('globalThemeBtn'),
+            themeToggleBtn: document.getElementById('themeToggleBtn'),
+            modeSpellBtn: document.getElementById('mode-spell-btn'),
+            modeCardBtn: document.getElementById('mode-card-btn'),
+            resetProgressBtn: document.getElementById('resetProgressBtn'),
+            speakBtn: document.getElementById('speakBtn'),
+            checkBtn: document.getElementById('checkBtn'),
+            showAnswerBtn: document.getElementById('showAnswerBtn'),
+            cardWord: document.getElementById('cardWord'),
+            cardPhonetic: document.getElementById('cardPhonetic'),
+            cardDesc: document.getElementById('cardDesc'),
+            ankiGradingButtons: document.getElementById('ankiGradingButtons'),
+            localDropZone: document.getElementById('localDropZone'),
+            localFileInp: document.getElementById('localFileInp'),
+            segmentIndicator: document.getElementById('segment-indicator'),
+            virtualKeyboard: document.getElementById('virtualKeyboard'),
+            passwordError: document.getElementById('passwordError'),
+            mainCard: document.getElementById('mainCard'),
+            iosToast: document.getElementById('iosToast')
+        };
+
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+        
+        function init() {
+            setupEventListeners();
+            loadSavedPreferences();
+            renderVirtualKeyboard();
+        }
+
+        function setupEventListeners() {
+            el.loginBtn.addEventListener('click', verifyPassword);
+            el.passInp.addEventListener('keydown', e => e.key === 'Enter' && verifyPassword());
+            
+            el.globalThemeBtn.addEventListener('click', toggleDarkMode);
+            el.themeToggleBtn.addEventListener('click', toggleDarkMode);
+            
+            el.groupSelector.addEventListener('change', onGroupChange);
+            el.unitSelector.addEventListener('change', onUnitChange);
+            
+            // 优化：重构代理触发逻辑，阻止桌面端多重事件冒泡和失效问题
+            const trigger = document.getElementById('unitSelectorTrigger');
+            if (trigger) {
+                const openDropdown = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    getAudioContext();
+                    
+                    // 强力对齐并聚焦
+                    el.unitSelector.focus();
+                    
+                    // 派发全兼容原生 Pointer 与 Mouse 事件
+                    const mEvent = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    el.unitSelector.dispatchEvent(mEvent);
+                };
+                
+                trigger.addEventListener('click', openDropdown);
+                trigger.addEventListener('touchend', openDropdown);
+            }
+            
+            el.modeSpellBtn.addEventListener('click', () => switchMode('spell'));
+            el.modeCardBtn.addEventListener('click', () => switchMode('card'));
+            
+            el.resetProgressBtn.addEventListener('click', resetAllProgress);
+            el.hintBtn.addEventListener('click', toggleHint);
+            el.speakBtn.addEventListener('click', speakWord);
+            el.checkBtn.addEventListener('click', check);
+            el.showAnswerBtn.addEventListener('click', flipToBack);
+            el.reviewBtn.addEventListener('click', reviewWrongWords);
+            
+            el.userInput.addEventListener('input', e => filterInput(e.target));
+
+            el.ankiGradingButtons.addEventListener('click', e => {
+                const btn = e.target.closest('.anki-btn');
+                if (btn) handleAnkiFeedback(btn.dataset.level);
+            });
+
+            el.mainCard.addEventListener('touchstart', e => {
+                state.touch.x = e.changedTouches[0].screenX;
+                state.touch.y = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            el.mainCard.addEventListener('touchend', handleCardTouchEnd, { passive: false });
+            el.mainCard.addEventListener('click', e => {
+                if (e.target.closest('button, select, input, label') || e.target.closest('#unitSelectorTrigger')) return;
+                if (state.mode === 'card') {
+                    if (state.side === 'front') flipToBack();
+                } else {
+                    el.userInput.focus();
+                }
+            });
+
+            window.addEventListener('keydown', handlePhysicalKeyboard);
+            el.netImage.addEventListener('error', handleImageError);
+            el.localDropZone.addEventListener('click', () => el.localFileInp.click());
+            el.localFileInp.addEventListener('change', e => handleFileSelect(e.target));
+        }
+
+        function verifyPassword() {
+            const input = el.passInp.value;
+            if (btoa(input) === CONFIG.HASH) {
+                getAudioContext();
+                el.audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+                el.audio.play().then(() => {
+                    el.passScreen.classList.add('hidden');
+                    el.globalThemeBtn.classList.add('hidden');
+                    el.gameContent.classList.remove('hidden');
+                    updateUnitOptions(true);
+                }).catch(() => {
+                    el.passScreen.classList.add('hidden');
+                    el.globalThemeBtn.classList.add('hidden');
+                    el.gameContent.classList.remove('hidden');
+                    updateUnitOptions(true);
+                });
+            } else {
+                el.passInp.classList.add('shake');
+                el.passwordError.classList.remove('hidden');
+                el.passInp.value = '';
+                setTimeout(() => el.passInp.classList.remove('shake'), 400);
+            }
+        }
+
+        function loadSavedPreferences() {
+            const theme = localStorage.getItem('spell_dark_mode');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+            
+            const group = localStorage.getItem('spell_saved_group');
+            if (group && CONFIG.COURSE_DATA[group]) {
+                el.groupSelector.value = group;
+            }
+
+            const wrongs = localStorage.getItem('spell_saved_wrong_words');
+            if (wrongs) {
+                try { 
+                    state.wrongWords = JSON.parse(wrongs); 
+                    updateWrongWordsButton(); 
+                } catch(e){}
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('spell_dark_mode', isDark ? 'dark' : 'light');
+        }
+        
+        async function loadCSV(url, isInitial = false) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error();
+                const text = await response.text();
+                parseRawText(text, isInitial);
+            } catch (err) {
+                showLoadError("未发现词库文件");
+            }
+        }
+
+        function parseRawText(text, isInitial = false) {
+            Papa.parse(text, {
+                header: true, skipEmptyLines: true,
+                complete: r => {
+                    if (r.data?.length > 0) {
+                        el.localDropZone.classList.add('hidden');
+                        state.wordBank = r.data;
+                        state.masteredWords.clear();
+                        state.currentIndex = isInitial ? parseInt(localStorage.getItem('spell_saved_index') || 0) : 0;
+                        if (state.currentIndex >= state.wordBank.length) {
+                            state.currentIndex = 0;
+                        }
+                        showCurrentWord();
+                    } else {
+                        showLoadError("数据空空如也");
+                    }
+                }
+            });
+        }
+
+        function showCurrentWord() {
+            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            document.getElementById('progressTitle').textContent = state.isReviewMode ? "错题消灭进度" : "冒险进度";
+
+            if (bank.length === 0) {
+                if (state.isReviewMode) {
+                    state.isReviewMode = false;
+                    showToast("🎉 错题全部消灭完毕！");
+                    updateWrongWordsButton();
+                } else {
+                    showLoadError("该组词库没有单词哦");
+                    return;
+                }
+            }
+
+            if (state.currentIndex >= bank.length) {
+                triggerEpicFireworks();
+                showToast(state.isReviewMode ? "🎉 错题消灭干净！" : "🎉 已完成本单元！");
+                state.currentIndex = 0;
+                if (state.isReviewMode) {
+                    state.isReviewMode = false;
+                    localStorage.removeItem('spell_saved_wrong_words');
+                }
+            }
+
+            const wordObj = bank[state.currentIndex];
+            if (!wordObj?.word) return;
+
+            state.side = 'front';
+            el.cardInner.classList.remove('is-flipped');
+            
+            const cleanWord = wordObj.word.trim();
+            state.currentInputValue = "";
+            el.userInput.value = "";
+            state.maxLetters = cleanWord.replace(/[^a-zA-Z]/g, "").length;
+
+            el.emoji.textContent = wordObj.emoji || "📝";
+            renderSlots(cleanWord);
+            updateUIStrings(wordObj);
+            fetchNetworkImage(cleanWord);
+            fetchPhonetic(cleanWord);
+            updateProgress();
+
+            if (!state.isReviewMode && state.mode === 'spell') {
+                localStorage.setItem('spell_saved_index', state.currentIndex);
+            }
+            
+            setTimeout(speakWord, 100);
+        }
+
+        function updateUIStrings(wordObj) {
+            if (state.mode === 'spell') {
+                el.desc.textContent = wordObj.desc || "";
+                el.descContainer.classList.add('hidden');
+                el.hintBtn.classList.remove('hidden');
+            } else {
+                el.cardWord.textContent = wordObj.word;
+                el.cardDesc.textContent = wordObj.desc || "";
+                // Card recitation mode: immediately show description/clue on front!
+                el.desc.textContent = wordObj.desc || "";
+                el.descContainer.classList.remove('hidden');
+                el.hintBtn.classList.add('hidden');
+            }
+        }
+
+        function filterInput(input) {
+            let val = input.value.replace(/[^a-zA-Z]/g, '').toLowerCase();
+            if (val.length > state.maxLetters) val = val.slice(0, state.maxLetters);
+            state.currentInputValue = val;
+            input.value = val;
+            updateSlots();
+        }
+
+        function updateSlots() {
+            const slots = el.letterSlots.children;
+            let inputIdx = 0;
+            for (let i = 0; i < slots.length; i++) {
+                if (slots[i].dataset.special === "true") continue;
+                if (slots[i].dataset.char === " ") continue;
+
+                if (inputIdx < state.currentInputValue.length) {
+                    const char = state.currentInputValue[inputIdx];
+                    if (slots[i].textContent === "•") slots[i].classList.add("letter-pop");
+                    slots[i].textContent = char;
+                    slots[i].className = "text-[#007aff] dark:text-[#34a8ff] font-extrabold border-b-[2px] border-[#007aff] dark:border-[#34a8ff] px-0.5 leading-none transition-all lowercase letter-pop";
+                } else {
+                    slots[i].textContent = "•";
+                    slots[i].classList.remove("letter-pop");
+                    slots[i].className = "text-[#8e8e93] dark:text-zinc-500 font-black px-0.5 transition-all leading-none opacity-80";
+                }
+                inputIdx++;
+            }
+        }
+
+        function check() {
+            if (state.mode !== 'spell' || state.isTrans) return;
+            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            
+            if (!bank || state.currentIndex >= bank.length || !bank[state.currentIndex]) {
+                return;
+            }
+            
+            const target = bank[state.currentIndex].word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+            
+            if (state.currentInputValue === target) {
+                state.isTrans = true;
+                playSound('success');
+                el.cardInner.classList.add('celebrate');
+
+                // iOS Safari Audio Preload: preload the next word's pronunciation inside user gesture handler!
+                try {
+                    let nextIdx = state.currentIndex;
+                    let tempBank = [...bank];
+                    if (state.isReviewMode) {
+                        tempBank.splice(state.currentIndex, 1);
+                    } else {
+                        nextIdx = state.currentIndex + 1;
+                    }
+                    if (tempBank.length > 0) {
+                        if (nextIdx >= tempBank.length) nextIdx = 0;
+                        const nextWord = tempBank[nextIdx]?.word;
+                        if (nextWord) {
+                            const accent = document.querySelector('input[name="accentType"]:checked').value;
+                            el.audio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(nextWord)}&type=${accent}`;
+                            el.audio.load();
+                        }
+                    }
+                } catch (e) {}
+
+                setTimeout(() => {
+                    el.cardInner.classList.remove('celebrate');
+                    if (state.isReviewMode) {
+                        state.wrongWords.splice(state.currentIndex, 1);
+                        localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                        updateWrongWordsButton();
+                    } else {
+                        state.currentIndex++;
+                    }
+                    state.isTrans = false;
+                    showCurrentWord();
+                }, 400);
+            } else {
+                state.isTrans = true;
+                playSound('error');
+                el.cardInner.classList.add('shake');
+                if (!state.isReviewMode) {
+                    const exists = state.wrongWords.some(w => w.word === bank[state.currentIndex].word);
+                    if (!exists) {
+                        state.wrongWords.push(bank[state.currentIndex]);
+                        localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                        updateWrongWordsButton();
+                    }
+                }
+                setTimeout(() => {
+                    el.cardInner.classList.remove('shake');
+                    state.currentInputValue = "";
+                    el.userInput.value = "";
+                    updateSlots();
+                    state.isTrans = false;
+                }, 450);
+            }
+        }
+
+        function fetchPhonetic(word) {
+            el.phonetic.textContent = "";
+            el.cardPhonetic.textContent = "";
+            if (!word || word.includes(" ")) return;
+
+            fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`)
+                .then(r => r.json())
+                .then(data => {
+                    const ph = data[0]?.phonetic || data[0]?.phonetics?.find(p => p.text)?.text;
+                    if (ph) {
+                        el.phonetic.textContent = ph;
+                        el.cardPhonetic.textContent = ph;
+                    }
+                }).catch(()=>{});
+        }
+
+        function fetchNetworkImage(word) {
+            state.imgRetryCount = 0;
+            el.netImageContainer.classList.remove('hidden');
+            el.imageShimmer.classList.remove('hidden');
+            el.netImage.classList.add('opacity-0');
+            el.netImage.src = `https://tse1-mm.cn.bing.net/th/id/OIP?q=${encodeURIComponent(word + " illustration")}&w=160&h=160&c=7&rs=1&p=0&dpr=2`;
+            
+            el.netImage.onload = () => {
+                el.imageShimmer.classList.add('hidden');
+                el.netImage.classList.remove('opacity-0');
+            };
+        }
+
+        function handleImageError() {
+            if (state.imgRetryCount === 0) {
+                state.imgRetryCount = 1;
+                el.netImage.src = `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=160&auto=format&fit=crop`;
+            } else {
+                el.netImageContainer.classList.add('hidden');
+            }
+        }
+
+        function speakWord() {
+            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            const word = bank[state.currentIndex]?.word;
+            if (!word) return;
+            getAudioContext(); 
+            const accent = document.querySelector('input[name="accentType"]:checked').value;
+            const targetSrc = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${accent}`;
+            
+            // iOS Safari optimization: do not re-assign src if already set to correct pronunciation.
+            // Re-assigning resets the media engine and triggers autoplay restrictions outside user gestures.
+            if (!el.audio.src.includes(encodeURIComponent(word)) || !el.audio.src.includes(`type=${accent}`)) {
+                el.audio.src = targetSrc;
+            }
+            el.audio.play().catch(()=>{});
+        }
+
+        function renderVirtualKeyboard() {
+            CONFIG.KBD_ROWS.forEach((row, i) => {
+                const rowEl = document.getElementById(`kbd-row${i+1}`);
+                rowEl.innerHTML = "";
+                row.forEach(key => {
+                    const btn = document.createElement('button');
+                    btn.textContent = key;
+                    btn.className = key === "⌫" 
+                        ? "flex-1 bg-[#8e8e93] dark:bg-zinc-600 text-white font-bold text-base py-3 rounded-xl shadow-md border border-white/10"
+                        : "flex-1 bg-white/80 dark:bg-[#2c2c2e]/80 text-iosText-light dark:text-iosText-dark font-semibold text-base py-3 rounded-xl shadow-md border border-white/20 dark:border-white/[0.03]";
+                    
+                    const keyHandler = (e) => {
+                        e.preventDefault();
+                        getAudioContext(); 
+                        handleKeyInput(key === "⌫" ? "BACKSPACE" : key);
+                    };
+
+                    btn.addEventListener('touchend', keyHandler);
+                    btn.addEventListener('mousedown', (e) => {
+                        if ('ontouchstart' in window) return; 
+                        keyHandler(e);
+                    });
+                    
+                    rowEl.appendChild(btn);
+                });
+            });
+        }
+
+        function handleKeyInput(key) {
+            if (state.mode !== 'spell') return;
+            if (key === "BACKSPACE") {
+                state.currentInputValue = state.currentInputValue.slice(0, -1);
+            } else if (state.currentInputValue.length < state.maxLetters) {
+                state.currentInputValue += key.toLowerCase();
+            }
+            el.userInput.value = state.currentInputValue;
+            updateSlots();
+        }
+
+        function handleAnkiFeedback(level) {
+            if (state.isTrans) return;
+            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            if (bank.length === 0) return;
+
+            state.isTrans = true;
+
+            // iOS Safari Audio Preload: preload the next word's pronunciation inside user gesture handler!
+            try {
+                let nextIdx = state.currentIndex;
+                let tempBank = [...bank];
+                if (level === 'again') {
+                    const item = tempBank.splice(state.currentIndex, 1)[0];
+                    tempBank.push(item);
+                } else if (level === 'good') {
+                    nextIdx = state.currentIndex + 1;
+                } else if (level === 'easy') {
+                    tempBank.splice(state.currentIndex, 1);
+                }
+                if (tempBank.length > 0) {
+                    if (nextIdx >= tempBank.length) nextIdx = 0;
+                    const nextWord = tempBank[nextIdx]?.word;
+                    if (nextWord) {
+                        const accent = document.querySelector('input[name="accentType"]:checked').value;
+                        el.audio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(nextWord)}&type=${accent}`;
+                        el.audio.load();
+                    }
+                }
+            } catch (err) {}
+
+            if (level === 'again') {
+                const item = bank.splice(state.currentIndex, 1)[0];
+                bank.push(item);
+                playSound('error');
+                el.cardInner.classList.add('shake');
+                setTimeout(() => el.cardInner.classList.remove('shake'), 450);
+            } else if (level === 'good') {
+                state.currentIndex++;
+            } else if (level === 'easy') {
+                state.masteredWords.add(bank[state.currentIndex].word);
+                bank.splice(state.currentIndex, 1);
+                playSound('success');
+                el.cardInner.classList.add('celebrate');
+                setTimeout(() => el.cardInner.classList.remove('celebrate'), 400);
+            }
+
+            state.side = 'front';
+            setTimeout(() => {
+                el.cardInner.classList.remove('is-flipped');
+                setTimeout(() => {
+                    if (bank.length === 0) {
+                        triggerEpicFireworks();
+                        showToast("🎉 全部掌握！");
+                        resetAllProgress();
+                    } else {
+                        if (state.currentIndex >= bank.length) state.currentIndex = 0;
+                        showCurrentWord();
+                    }
+                    state.isTrans = false;
+                }, 150);
+            }, 250);
+        }
+
+        function renderSlots(word) {
+            el.letterSlots.innerHTML = "";
+            const isLong = word.length > 12;
+            const sizeClass = isLong ? "text-xs" : "text-lg";
+
+            [...word].forEach(char => {
+                const span = document.createElement('span');
+                span.dataset.char = char.toLowerCase();
+                if (/[a-zA-Z]/.test(char)) {
+                    span.textContent = "•";
+                    span.className = `text-[#8e8e93] dark:text-zinc-500 leading-none ${sizeClass} px-0.5 text-center opacity-80`;
+                } else if (char === " ") {
+                    span.innerHTML = "&nbsp;";
+                    span.className = `w-3 border-b border-transparent ${sizeClass}`;
+                } else {
+                    span.textContent = char;
+                    span.dataset.special = "true";
+                    span.className = `text-iosText-light dark:text-iosText-dark font-mono leading-none ${sizeClass} px-0.5`;
+                }
+                el.letterSlots.appendChild(span);
+            });
+        }
+
+        function updateProgress() {
+            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            const total = bank.length + state.masteredWords.size;
+            let percent = 0;
+
+            if (state.mode === 'spell') {
+                percent = bank.length ? Math.round((state.currentIndex / bank.length) * 100) : 100;
+            } else {
+                percent = total ? Math.round((state.masteredWords.size / total) * 100) : 0;
+                if (bank.length === 0) percent = 100;
+            }
+
+            const pStr = `${percent}%`;
+            el.progressBar.style.width = pStr;
+            el.progressText.textContent = state.mode === 'spell' ? pStr : `已掌握: ${pStr} (余 ${bank.length})`;
+            el.navProgress.textContent = pStr;
+        }
+
+        function switchMode(mode) {
+            state.mode = mode;
+            state.side = 'front';
+            el.cardInner.classList.remove('is-flipped');
+            
+            const isSpell = mode === 'spell';
+            el.segmentIndicator.style.transform = isSpell ? 'translateX(0%)' : 'translateX(100%)';
+            el.virtualKeyboard.classList.toggle('hidden', !isSpell);
+            document.getElementById('spellActionButtons').classList.toggle('hidden', !isSpell);
+            document.getElementById('cardFrontActionButtons').classList.toggle('hidden', isSpell);
+            el.letterSlots.classList.toggle('hidden', !isSpell);
+            
+            showCurrentWord();
+        }
+
+        function handleCardTouchEnd(e) {
+            if (state.mode !== 'card') return;
+            const diffX = e.changedTouches[0].screenX - state.touch.x;
+            const diffY = e.changedTouches[0].screenY - state.touch.y;
+            
+            // Only trigger horizontal swipe if horizontal displacement is greater than vertical
+            if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
+                e.preventDefault(); // Crucial: prevents simulated ghost-click events from leaking onto the next card!
+                if (state.side === 'front') flipToBack();
+                else handleAnkiFeedback(diffX < 0 ? 'again' : 'easy');
+            }
+        }
+
+        function handlePhysicalKeyboard(e) {
+            if (!el.passScreen.classList.contains('hidden')) return;
+            if (document.activeElement === el.passInp) return;
+
+            if (state.mode === 'card') {
+                if (e.key === ' ') { 
+                    e.preventDefault(); 
+                    if (state.side === 'front') flipToBack(); 
+                }
+                if (state.side === 'back') {
+                    if (e.key === '1') handleAnkiFeedback('again');
+                    if (e.key === '2') handleAnkiFeedback('good');
+                    if (e.key === '3') handleAnkiFeedback('easy');
+                }
+            } else {
+                if (e.key === 'Backspace') { 
+                    e.preventDefault(); 
+                    handleKeyInput('BACKSPACE'); 
+                } else if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    check(); 
+                } else if (/^[a-zA-Z]$/.test(e.key)) { 
+                    e.preventDefault(); 
+                    handleKeyInput(e.key); 
+                }
+            }
+        }
+
+        function onGroupChange() {
+            state.isReviewMode = false;
+            localStorage.setItem('spell_saved_group', el.groupSelector.value);
+            updateUnitOptions();
+        }
+
+        function onUnitChange() {
+            state.isReviewMode = false;
+            localStorage.setItem('spell_saved_unit', el.unitSelector.value);
+            localStorage.removeItem('spell_saved_index');
+            
+            // 实时渲染当前所选框文字
+            el.activeUnitName.textContent = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
+            loadCSV(el.unitSelector.value);
+        }
+
+        function updateUnitOptions(isInitial = false) {
+            const group = el.groupSelector.value;
+            const units = CONFIG.COURSE_DATA[group] || [];
+            el.unitSelector.innerHTML = units.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
+
+            if (isInitial) {
+                const saved = localStorage.getItem('spell_saved_unit');
+                if (saved && units.some(u => u.value === saved)) {
+                    el.unitSelector.value = saved;
+                }
+            }
+            
+            el.activeUnitName.textContent = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
+            loadCSV(el.unitSelector.value, isInitial);
+        }
+
+        function toggleHint() { 
+            el.descContainer.classList.remove('hidden'); 
+            el.hintBtn.classList.add('hidden'); 
+        }
+
+        function flipToBack() { 
+            state.side = 'back'; 
+            el.cardInner.classList.add('is-flipped'); 
+            speakWord(); 
+        }
+        
+        function updateWrongWordsButton() {
+            const count = state.wrongWords.length;
+            el.reviewBtn.textContent = `温习错题库 (${count})`;
+            el.reviewBtn.classList.toggle('hidden', count === 0);
+        }
+
+        function reviewWrongWords() {
+            if (state.wrongWords.length === 0) return;
+            state.isReviewMode = true;
+            state.currentIndex = 0;
+            showCurrentWord();
+        }
+
+        function resetAllProgress() {
+            if (confirm("确定要重置当前进度吗？")) {
+                state.currentIndex = 0;
+                state.masteredWords.clear();
+                localStorage.removeItem('spell_saved_index');
+                showCurrentWord();
+            }
+        }
+
+        function showToast(msg) {
+            el.iosToast.textContent = msg;
+            el.iosToast.classList.replace('opacity-0', 'opacity-100');
+            el.iosToast.classList.replace('translate-y-2', 'translate-y-0');
+            setTimeout(() => {
+                el.iosToast.classList.replace('opacity-100', 'opacity-0');
+                el.iosToast.classList.replace('translate-y-0', 'translate-y-2');
+            }, 2000);
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.connect(g);
+                g.connect(ctx.destination);
+                if (type === 'success') {
+                    osc.frequency.setValueAtTime(523, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.2);
+                }
+                g.gain.setValueAtTime(0.1, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } catch (e) {}
+            if (navigator.vibrate) {
+                try {
+                    navigator.vibrate(type === 'success' ? 20 : [40, 40]);
+                } catch (e) {}
+            }
+        }
+
+        function triggerEpicFireworks() {
+            if (typeof confetti !== 'function') return;
+            const end = Date.now() + 1500;
+            (function frame() {
+                try {
+                    confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0, y: 0.8 } });
+                    confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1, y: 0.8 } });
+                } catch (e) {}
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        // 统一展示加载状态
+        function showLoadError(msg) {
+            el.desc.textContent = msg;
+            el.descContainer.classList.remove('hidden');
+            el.hintBtn.classList.add('hidden');
+            el.emoji.textContent = "📂";
+            el.localDropZone.classList.remove('hidden');
+        }
+
+        function handleFileSelect(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = e => parseRawText(e.target.result);
+                reader.readAsText(input.files[0]);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

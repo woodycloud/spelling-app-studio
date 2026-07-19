@@ -1,0 +1,24 @@
+{
+  "name": "Xinyi SpellQuest",
+  "short_name": "SpellQuest",
+  "description": "少儿英语拼读挑战与卡片背诵",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f4f9",
+  "theme_color": "#007aff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluent/192/000000/wizard.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://img.icons8.com/fluent/512/000000/wizard.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
