@@ -32,6 +32,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
     
     <style>
         * {
@@ -189,6 +190,16 @@
             100% { transform: scale(1) translateY(0); opacity: 1; }
         }
         .letter-pop { animation: letter-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        @keyframes fade-in {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .animate-fade-in { animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes scale-up {
+            0% { transform: scale(0.95) translateY(12px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-scale-up { animation: scale-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .ghost-input { position: absolute; top: -9999px; left: -9999px; opacity: 0; }
         
         #virtualKeyboard button { transition: background-color 0.1s ease, transform 0.1s ease; }
@@ -221,9 +232,9 @@
     <div id="gameContent" class="w-full max-w-md hidden html-down flex flex-col flex-1 justify-center h-full overflow-hidden">
         
         <!-- 优化：增加 mt-2（上外边距），使 header 整体在视觉 and 结构上下移，避开系统触控死角 -->
-        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl sticky top-0 z-40 border border-white/30 dark:border-white/5 py-2 px-3 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-2 mb-1.5 flex items-center justify-between flex-shrink-0">
-            <div class="flex items-center gap-1.5 flex-1 min-w-0">
-                <svg class="w-7 h-7 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl sticky top-0 z-40 border border-white/30 dark:border-white/5 py-2 px-3 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-2 mb-1.5 flex items-center justify-between flex-shrink-0 gap-1.5">
+            <div class="flex items-center gap-1 flex-1 min-w-0">
+                <svg class="w-6 h-6 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                     <path d="M40,90 C40,40 160,40 160,90 L170,110 C140,115 60,115 30,110 Z" fill="#a1887f"/>
                     <ellipse cx="100" cy="110" rx="75" ry="10" fill="#8d6e63"/>
                     <circle cx="100" cy="125" r="30" fill="#ffcc80"/>
@@ -242,14 +253,14 @@
                         <text x="150" y="55" fill="#fabc05" transform="rotate(15 150 55)">C</text>
                     </g>
                 </svg>
-                <h1 class="text-xs font-bold tracking-tight text-left truncate">XiyiSpellQuet</h1>
+                <h1 class="text-[10px] font-black tracking-tight text-left truncate text-gray-800 dark:text-gray-100">SpellQuest</h1>
             </div>
             
-            <div id="unitSelectorTrigger" class="relative flex items-center justify-center bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-200 px-3 py-1.5 rounded-xl text-[10px] font-bold text-center cursor-pointer max-w-[160px] flex-1 mx-1.5 border border-black/[0.02] dark:border-white/[0.02] z-50">
-                <span id="activeUnitName" class="truncate pr-3 text-gray-800 dark:text-gray-200 relative z-20">正在加载...</span>
-                <span class="absolute right-2 text-[7px] opacity-40 z-20">▼</span>
-                <select id="unitSelector" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-30"></select>
-            </div>
+            <button id="openCoursePageBtn" class="flex items-center gap-1 px-2.5 py-1 bg-[#007aff]/10 hover:bg-[#007aff]/15 dark:bg-[#0a84ff]/15 dark:hover:bg-[#0a84ff]/20 active:scale-95 text-[10px] font-extrabold text-[#007aff] dark:text-[#0a84ff] rounded-full transition-all border border-[#007aff]/10 dark:border-[#0a84ff]/25 max-w-[150px] truncate h-[26px]">
+                <span>📚</span>
+                <span id="activeUnitName" class="truncate">选择课程</span>
+                <span class="text-[7px] opacity-60">❯</span>
+            </button>
             
             <div class="flex items-center gap-1.5 flex-shrink-0">
                 <div class="flex flex-col items-end pr-0.5 justify-center">
@@ -262,80 +273,47 @@
             </div>
         </header>
         
-        <!-- Wizard Growth & Check-in Panel -->
-        <div id="wizardPanel" class="w-full bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-indigo-500/10 dark:from-violet-500/15 dark:via-fuchsia-500/15 dark:to-indigo-500/15 backdrop-blur-2xl p-2 rounded-xl shadow-sm border border-violet-500/20 dark:border-violet-500/30 flex flex-col gap-1 mb-1.5 flex-shrink-0">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-base">🧙‍♂️</span>
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-1">
-                            <span id="wizardLevelBadge" class="text-[9px] bg-violet-600 text-white font-extrabold px-1.5 py-0.5 rounded-md leading-none shadow-sm shadow-violet-600/20">Lv.1</span>
-                            <span id="wizardTitle" class="text-[10px] font-bold text-violet-700 dark:text-violet-300">见习魔法学徒</span>
-                        </div>
-                        <span id="wizardExpText" class="text-[8px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5">0 / 100 EXP</span>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-1.5">
-                    <!-- Daily Streak -->
-                    <div class="flex items-center gap-0.5 bg-amber-500/10 dark:bg-amber-500/25 px-1.5 py-0.5 rounded-lg border border-amber-500/20">
-                        <span class="text-[10px]">🔥</span>
-                        <span id="wizardStreak" class="text-[9px] font-extrabold text-amber-600 dark:text-amber-400">0天</span>
-                    </div>
-                    
-                    <!-- Star Points -->
-                    <div class="flex items-center gap-0.5 bg-fuchsia-500/10 dark:bg-fuchsia-500/25 px-1.5 py-0.5 rounded-lg border border-fuchsia-500/20">
-                        <span class="text-[10px]">✨</span>
-                        <span id="wizardStars" class="text-[9px] font-extrabold text-fuchsia-600 dark:text-fuchsia-400">0</span>
-                    </div>
-
-                    <!-- Ebbinghaus Due Reminder -->
-                    <div id="ebbinghausDueReminder" class="flex items-center gap-0.5 bg-rose-500/10 dark:bg-rose-500/25 px-1.5 py-0.5 rounded-lg border border-rose-500/20 hover:scale-105 active:scale-95 cursor-pointer transition-all hidden">
-                        <span class="text-[10px]">⏳</span>
-                        <span id="ebbinghausDueCount" class="text-[9px] font-extrabold text-rose-600 dark:text-rose-400">待复习 0</span>
-                    </div>
-
-                    <!-- Daily Check-In Button -->
-                    <button id="wizardCheckInBtn" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-[9px] px-2 py-1 rounded-lg shadow-md shadow-indigo-600/15 active:scale-95 transition-all duration-200">打卡</button>
+        <!-- Mini Wizard Entry Bar (Replaces the large wizardPanel to avoid cluttering) -->
+        <div id="wizardEntryBtn" class="w-full bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-indigo-500/10 dark:from-violet-500/15 dark:via-fuchsia-500/15 dark:to-indigo-500/15 backdrop-blur-2xl px-3 py-1.5 rounded-xl shadow-sm border border-violet-500/20 dark:border-violet-500/30 flex items-center justify-between mb-1.5 flex-shrink-0 cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all select-none">
+            <div class="flex items-center gap-1.5">
+                <span class="text-base">🧙‍♂️</span>
+                <div class="flex items-center gap-1">
+                    <span id="miniWizardLevel" class="text-[8px] bg-violet-600 text-white font-extrabold px-1 rounded leading-none py-0.5">Lv.1</span>
+                    <span id="miniWizardTitle" class="text-[9px] font-bold text-violet-700 dark:text-violet-300">见习魔法学徒</span>
                 </div>
             </div>
             
-            <!-- Exp Progress Bar -->
-            <div class="w-full bg-violet-600/5 dark:bg-white/5 rounded-full h-1.5 overflow-hidden border border-violet-500/5">
-                <div id="wizardExpBar" class="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 h-full w-0 transition-all duration-500 ease-out"></div>
+            <div class="flex items-center gap-1.5">
+                <!-- Ebbinghaus Due Reminder (moved here) -->
+                <div id="ebbinghausDueReminder" class="flex items-center gap-0.5 bg-rose-500/10 dark:bg-rose-500/25 px-1.5 py-0.5 rounded-lg border border-rose-500/20 hover:scale-105 active:scale-95 cursor-pointer transition-all hidden">
+                    <span class="text-[10px]">⏳</span>
+                    <span id="ebbinghausDueCount" class="text-[9px] font-extrabold text-rose-600 dark:text-rose-400">待复习 0</span>
+                </div>
+
+                <!-- Streak & Medals Compact Badge -->
+                <div class="flex items-center gap-1 text-[9px] font-semibold text-gray-500 dark:text-gray-400">
+                    <span class="text-amber-600 dark:text-amber-400">🔥 <span id="miniWizardStreak">0天</span></span>
+                    <span class="text-fuchsia-600 dark:text-fuchsia-400">🏆 <span id="miniWizardBadgesCount">0勋章</span></span>
+                </div>
+                
+                <span class="text-[8px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 dark:bg-violet-500/20 px-1.5 py-0.5 rounded-md">进入圣殿 ➜</span>
             </div>
         </div>
         
-        <div class="w-full flex flex-col gap-1 mb-1.5 bg-white/30 dark:bg-black/15 backdrop-blur-2xl p-1.5 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-white/20 dark:border-white/5 flex-shrink-0">
-            <div class="flex gap-1.5 items-center">
-                <div class="relative flex-1 bg-black/[0.04] dark:bg-white/[0.04] rounded-lg px-1 border border-black/[0.01] dark:border-white/[0.01]">
-                    <select id="groupSelector" class="w-full py-1 bg-transparent rounded-lg text-[10px] font-bold cursor-pointer text-center appearance-none text-iosText-light dark:text-iosText-dark">
-                        <option value="newConcept">🎒 少儿新概念</option>
-                        <option value="schoolClass">🏫 学校课堂组</option>
-                        <option value="ieltsClass">🗽 雅思词汇</option>
-                    </select>
-                </div>
-                <button id="resetProgressBtn" class="text-[9px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#ff453a] px-2 py-1 bg-white/40 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] rounded-lg shadow-sm transition-all flex-shrink-0 active:scale-95">🔄 重置单元</button>
+        <!-- Slim Settings Bar (Accent and Mode switch) -->
+        <div class="w-full flex items-center justify-between gap-1.5 mb-1.5 bg-white/30 dark:bg-black/15 backdrop-blur-2xl p-1 rounded-xl border border-white/20 dark:border-white/5 flex-shrink-0 h-[34px]">
+            <!-- Left: Accent Select Segment -->
+            <div class="relative flex bg-black/[0.04] dark:bg-white/[0.04] p-0.5 rounded-lg h-[26px] w-[105px] flex-shrink-0">
+                <div id="accent-segment-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-white dark:bg-[#1c1c1e] rounded-[6px] shadow-sm transition-all duration-300 ease-out z-0"></div>
+                <button id="accent-us-btn" class="flex-1 rounded-[6px] font-bold text-[9px] transition-colors duration-200 text-iosText-light dark:text-iosText-dark relative z-10">美音</button>
+                <button id="accent-uk-btn" class="flex-1 rounded-[6px] font-medium text-[9px] transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">英音</button>
             </div>
             
-            <div class="grid grid-cols-2 gap-1.5 items-center">
-                <div class="bg-black/[0.03] dark:bg-white/[0.03] py-0.5 px-1.5 rounded-lg flex items-center justify-between border border-black/[0.01] dark:border-white/[0.01] h-[22px]">
-                    <span class="text-[8px] font-semibold text-gray-500 dark:text-gray-400">口音</span>
-                    <div class="flex gap-1.5">
-                        <label class="flex items-center gap-0.5 text-[9px] font-semibold cursor-pointer">
-                            <input type="radio" name="accentType" value="2" checked class="w-2.5 h-2.5 accent-[#007aff]"> 美
-                        </label>
-                        <label class="flex items-center gap-0.5 text-[9px] font-semibold cursor-pointer">
-                            <input type="radio" name="accentType" value="1" class="w-2.5 h-2.5 accent-[#007aff]"> 英
-                        </label>
-                    </div>
-                </div>
-
-                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-lg h-[22px]">
-                    <div id="segment-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-white dark:bg-[#1c1c1e] rounded-[6px] shadow-md transition-transform duration-300 ease-out z-0"></div>
-                    <button id="mode-spell-btn" class="flex-1 rounded-[6px] font-bold text-[9px] transition-colors duration-200 text-iosText-light dark:text-iosText-dark relative z-10">拼读挑战</button>
-                    <button id="mode-card-btn" class="flex-1 rounded-[6px] font-medium text-[9px] transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">卡片背诵</button>
-                </div>
+            <!-- Right: Mode Segment -->
+            <div class="relative flex-1 flex bg-black/[0.04] dark:bg-white/[0.04] p-0.5 rounded-lg h-[26px]">
+                <div id="segment-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-white dark:bg-[#1c1c1e] rounded-[6px] shadow-md transition-transform duration-300 ease-out z-0"></div>
+                <button id="mode-spell-btn" class="flex-1 rounded-[6px] font-bold text-[9px] transition-colors duration-200 text-iosText-light dark:text-iosText-dark relative z-10">拼读挑战</button>
+                <button id="mode-card-btn" class="flex-1 rounded-[6px] font-medium text-[9px] transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">卡片背诵</button>
             </div>
         </div>
 
@@ -343,14 +321,21 @@
             <div id="cardInner" class="card-inner">
                 
                 <div class="card-front bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-3 rounded-[28px] ios-depth absolute">
-                    <!-- Floating Controls -->
-                    <button id="exitReviewBtn" class="absolute top-3 left-3 z-30 bg-black/10 dark:bg-white/10 px-2.5 py-1 rounded-full text-[9px] font-bold text-gray-600 dark:text-gray-300 active:scale-90 transition-all duration-200 hidden">
-                        🔙 退出温习
-                    </button>
                     <div>
-                        <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
-                            <span id="progressTitle">冒险进度</span>
-                            <span id="progressText" class="text-[#007aff] font-bold">0%</span>
+                        <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5 min-h-[22px]">
+                            <div class="flex items-center gap-1.5">
+                                <button id="exitReviewBtn" class="bg-black/10 dark:bg-white/10 hover:bg-black/15 dark:hover:bg-white/15 px-2 py-0.5 rounded-md text-[8px] font-bold text-gray-600 dark:text-gray-300 active:scale-90 transition-all duration-200 hidden">
+                                    🔙 退出
+                                </button>
+                                <span id="progressTitle">冒险进度</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span id="progressText" class="text-[#007aff] font-bold">0%</span>
+                                <!-- Star button to save/remove word in Smart Vocabulary Book, positioned in flex flow to prevent overlap -->
+                                <button id="vocabToggleBtnFront" class="z-30 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all text-gray-400 dark:text-gray-500" title="加入/移出生词本">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.21l8.2-1.192L12 .587z"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="progress-container">
                             <div id="progressBar" class="progress-bar" style="width: 0%"></div>
@@ -400,7 +385,13 @@
                     <div>
                         <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
                             <span>卡片解读</span>
-                            <span id="cardProgressText" class="text-[#34c759] font-bold">掌握中</span>
+                            <div class="flex items-center gap-1.5">
+                                <span id="cardProgressText" class="text-[#34c759] font-bold">掌握中</span>
+                                <!-- Star button to save/remove word in Smart Vocabulary Book, positioned in flex flow to prevent overlap -->
+                                <button id="vocabToggleBtnBack" class="z-30 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all text-gray-400 dark:text-gray-500" title="加入/移出生词本">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.21l8.2-1.192L12 .587z"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="progress-container">
                             <div class="progress-bar" style="width: 100%; background: #34c759;"></div>
@@ -433,9 +424,12 @@
         </div>
         
         <!-- Reinforcement Training Hub -->
-        <div id="trainingHub" class="w-full mb-1 flex-shrink-0">
-            <button id="reviewWrongBtn" class="w-full bg-gradient-to-r from-red-500/10 to-orange-500/10 dark:from-red-500/15 dark:to-orange-500/15 border border-red-500/20 text-[#ff453a] dark:text-[#ff6961] py-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-sm">
-                🔥 错词攻坚 <span id="wrongCount" class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none ml-1">0</span>
+        <div id="trainingHub" class="w-full mb-1 flex-shrink-0 grid grid-cols-2 gap-2">
+            <button id="reviewWrongBtn" class="bg-gradient-to-r from-red-500/10 to-orange-500/10 dark:from-red-500/15 dark:to-orange-500/15 border border-red-500/20 text-[#ff453a] dark:text-[#ff6961] py-2.5 rounded-xl font-bold text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-sm">
+                🔥 错词攻坚 <span id="wrongCount" class="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full leading-none ml-0.5">0</span>
+            </button>
+            <button id="reviewVocabBtn" class="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 dark:from-amber-500/15 dark:to-yellow-500/15 border border-amber-500/20 text-[#ff9f0a] dark:text-[#ffb340] py-2.5 rounded-xl font-bold text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-sm">
+                📖 生词强化 <span id="vocabCount" class="bg-[#ff9f0a] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full leading-none ml-0.5">0</span>
             </button>
         </div>
 
@@ -453,9 +447,168 @@
         </div>
     </div>
 
+    <!-- Wizard Sanctuary Overlay Modal (Separate Page) -->
+    <div id="wizardSanctuaryModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md hidden p-4 overflow-y-auto animate-fade-in">
+        <div class="bg-gradient-to-b from-violet-50 via-indigo-50/50 to-fuchsia-50/30 dark:from-black dark:via-purple-950/80 dark:to-black border border-violet-200 dark:border-violet-500/30 rounded-[32px] p-6 max-w-sm w-full text-center shadow-2xl relative overflow-hidden flex flex-col gap-4 max-h-[95vh] my-auto">
+            <!-- Floating ambient glowing blobs -->
+            <div class="absolute -top-12 -left-12 w-32 h-32 bg-violet-300/30 dark:bg-violet-500/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-300/30 dark:bg-indigo-500/20 rounded-full blur-3xl"></div>
+
+            <!-- Close Button -->
+            <button id="closeSanctuaryBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white bg-black/5 dark:bg-white/5 active:scale-90 w-8 h-8 flex items-center justify-center rounded-full transition-all text-sm font-bold z-50">✕</button>
+
+            <!-- Header -->
+            <div class="relative z-10 flex flex-col items-center border-b border-black/5 dark:border-white/10 pb-3">
+                <span class="text-[9px] font-black tracking-widest text-violet-600 dark:text-violet-300 uppercase mb-1">🔮 魔法圣殿 🔮</span>
+                <div class="text-4xl my-2 animate-bounce">🧙‍♂️</div>
+                <h2 class="text-sm font-black text-gray-900 dark:text-white">魔法工坊 & 勋章馆</h2>
+                <p class="text-[8px] text-gray-500 dark:text-gray-400">研习魔咒，解锁无上魔法荣誉</p>
+            </div>
+
+            <!-- Main Stats Card (Glassmorphism) -->
+            <div class="relative z-10 bg-white/70 dark:bg-white/5 border border-black/[0.05] dark:border-white/10 p-3 rounded-2xl flex flex-col gap-2.5 text-left">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                        <span id="wizardLevelBadge" class="text-[9px] bg-violet-600 text-white font-extrabold px-2 py-0.5 rounded-md leading-none shadow-sm shadow-violet-600/20">Lv.1</span>
+                        <span id="wizardTitle" class="text-[10px] font-extrabold text-violet-700 dark:text-violet-300">见习魔法学徒</span>
+                    </div>
+                    <button id="wizardCheckInBtn" class="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-[9px] px-2.5 py-1 rounded-lg shadow-md shadow-indigo-600/15 active:scale-95 transition-all duration-200 flex-shrink-0">打卡</button>
+                </div>
+
+                <!-- Exp progress -->
+                <div>
+                    <div class="flex justify-between items-center text-[8px] font-semibold text-gray-500 dark:text-gray-400 mb-1 px-0.5">
+                        <span>魔力值</span>
+                        <span id="wizardExpText" class="text-violet-700 dark:text-violet-300">0 / 100 EXP</span>
+                    </div>
+                    <div class="w-full bg-black/5 dark:bg-white/5 rounded-full h-1.5 overflow-hidden border border-black/[0.02] dark:border-white/5">
+                        <div id="wizardExpBar" class="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 h-full w-0 transition-all duration-500 ease-out"></div>
+                    </div>
+                </div>
+
+                <!-- Extra stats row -->
+                <div class="grid grid-cols-2 gap-2 mt-0.5">
+                    <div class="bg-black/[0.02] dark:bg-white/5 border border-black/[0.03] dark:border-white/5 px-2 py-1 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs">🔥</span>
+                            <span class="text-[8px] text-gray-600 dark:text-gray-300">连续打卡</span>
+                        </div>
+                        <span id="wizardStreak" class="text-[10px] font-extrabold text-amber-600 dark:text-amber-400">0天</span>
+                    </div>
+                    <div class="bg-black/[0.02] dark:bg-white/5 border border-black/[0.03] dark:border-white/5 px-2 py-1 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs">✨</span>
+                            <span class="text-[8px] text-gray-600 dark:text-gray-300">魔法星星</span>
+                        </div>
+                        <span id="wizardStars" class="text-[10px] font-extrabold text-fuchsia-600 dark:text-fuchsia-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Study Intensity Section (D3 Chart Container) -->
+            <div class="relative z-10 bg-white/70 dark:bg-white/5 border border-black/[0.05] dark:border-white/10 p-3 rounded-2xl flex flex-col gap-1 text-left">
+                <div class="flex justify-between items-center border-b border-black/5 dark:border-white/5 pb-1">
+                    <span class="text-[10px] font-black text-violet-700 dark:text-violet-300 flex items-center gap-1">📊 7日魔咒研习强度</span>
+                    <span class="text-[8px] text-gray-500 dark:text-gray-400 font-bold" id="wizardWeeklyTotalText">本周累计: 0 EXP</span>
+                </div>
+                <div id="studyIntensityChart" class="w-full h-16 flex items-end justify-between px-1">
+                    <!-- Svg/Bars rendered dynamically by D3 -->
+                </div>
+            </div>
+
+            <!-- Badges Section -->
+            <div class="relative z-10 flex flex-col gap-1.5 text-left flex-1 min-h-[140px]">
+                <div class="flex justify-between items-center border-b border-black/[0.05] dark:border-white/10 pb-1">
+                    <span class="text-[10px] font-black text-violet-700 dark:text-violet-300 flex items-center gap-1">🏆 魔法勋章馆</span>
+                    <span id="unlockedBadgesCount" class="text-[8px] font-bold text-gray-500 dark:text-gray-400">已解锁: 0/17</span>
+                </div>
+                
+                <!-- Badge Filter Tabs -->
+                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.08] p-0.5 rounded-lg h-[24px] items-center text-[8px] font-extrabold my-1 flex-shrink-0">
+                    <button data-badge-filter="all" class="badge-filter-tab flex-1 rounded-md py-0.5 text-center transition-all text-violet-700 dark:text-violet-200 bg-white dark:bg-white/10 shadow-sm">全部</button>
+                    <button data-badge-filter="unlocked" class="badge-filter-tab flex-1 rounded-md py-0.5 text-center transition-all text-gray-500 dark:text-gray-400">已点亮</button>
+                    <button data-badge-filter="locked" class="badge-filter-tab flex-1 rounded-md py-0.5 text-center transition-all text-gray-500 dark:text-gray-400">未点亮</button>
+                </div>
+                
+                <!-- Badges scrollable container -->
+                <div id="wizardBadgesContainer" class="grid grid-cols-5 gap-1.5 overflow-y-auto max-h-[140px] p-0.5">
+                    <!-- Badges dynamically rendered here -->
+                </div>
+            </div>
+            
+            <!-- Helpful tip footer -->
+            <p class="text-[8px] text-gray-500 italic mt-auto select-none">温馨提示：点击任意勋章图标，可查看点亮要求与当前进度哦！</p>
+        </div>
+    </div>
+
     <div id="iosToast" class="fixed bottom-1/3 left-1/2 -translate-x-1/2 bg-black/85 dark:bg-white/95 text-white dark:text-black text-xs font-bold px-5 py-3 rounded-2xl shadow-xl backdrop-blur-2xl opacity-0 pointer-events-none transition-all duration-300 transform translate-y-2 z-50">提示</div>
 
     <audio id="globalAudioPlayer" style="display: none;"></audio>
+
+    <!-- Hidden compatibility elements to support original stable loading & state management -->
+    <div class="hidden" style="display: none;">
+        <select id="groupSelector">
+            <option value="newConcept">newConcept</option>
+            <option value="schoolClass">schoolClass</option>
+            <option value="ieltsClass">ieltsClass</option>
+        </select>
+        <select id="unitSelector"></select>
+        <!-- Accent Radio inputs to support voice synthesis -->
+        <input type="radio" name="accentType" id="hiddenAccentUS" value="2" checked>
+        <input type="radio" name="accentType" id="hiddenAccentUK" value="1">
+    </div>
+
+    <!-- Course Selection Page (Apple iOS Bottom Sheet style modal) -->
+    <div id="courseSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/85 backdrop-blur-md hidden p-3 overflow-y-auto animate-fade-in">
+        <div class="bg-[#f2f2f7] dark:bg-[#1c1c1e] border border-black/10 dark:border-white/10 rounded-[32px] w-full max-w-sm text-center shadow-2xl relative overflow-hidden flex flex-col h-[85vh] max-h-[640px] my-auto animate-scale-up">
+            
+            <!-- Drag handle to simulate iOS Sheet -->
+            <div class="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-2.5 mb-1.5 flex-shrink-0"></div>
+            
+            <!-- Close Button -->
+            <button id="closeCourseSelectionBtn" class="absolute top-3.5 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white bg-black/5 dark:bg-white/10 active:scale-90 w-7 h-7 flex items-center justify-center rounded-full transition-all text-xs font-bold z-50">✕</button>
+
+            <!-- Header -->
+            <div class="relative z-10 flex flex-col items-center px-4 pb-2">
+                <h2 class="text-sm font-black text-gray-900 dark:text-white flex items-center gap-1">📚 魔法课程库</h2>
+                <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium">选择你感兴趣的词库开展拼读冒险</p>
+            </div>
+
+            <!-- Search input -->
+            <div class="px-4 mb-2 flex-shrink-0">
+                <div class="relative flex items-center bg-white dark:bg-[#2c2c2e] px-2.5 py-1.5 rounded-xl border border-black/[0.04] dark:border-white/[0.04] shadow-sm">
+                    <span class="text-[10px] text-gray-400 mr-1.5">🔍</span>
+                    <input id="courseSearchInput" type="text" placeholder="搜索课程或单元..." class="w-full bg-transparent text-[10px] text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-medium">
+                    <button id="clearCourseSearchBtn" class="text-[9px] text-gray-400 hover:text-gray-600 dark:hover:text-white hidden">✕</button>
+                </div>
+            </div>
+
+            <!-- Segmented Category Tab Bar -->
+            <div class="px-4 mb-3 flex-shrink-0">
+                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-xl h-[30px] items-center">
+                    <div id="course-category-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.333%-2px)] bg-white dark:bg-[#2c2c2e] rounded-[9px] shadow-sm transition-all duration-300 ease-out z-0"></div>
+                    <button data-group="newConcept" class="course-category-tab flex-1 rounded-[9px] font-black text-[9px] py-1 transition-colors duration-200 text-gray-900 dark:text-white relative z-10">🎒 新概念</button>
+                    <button data-group="schoolClass" class="course-category-tab flex-1 rounded-[9px] font-semibold text-[9px] py-1 transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">🏫 课堂组</button>
+                    <button data-group="ieltsClass" class="course-category-tab flex-1 rounded-[9px] font-semibold text-[9px] py-1 transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">🗽 雅思词</button>
+                </div>
+            </div>
+
+            <!-- Scrolling Unit List -->
+            <div class="flex-1 overflow-y-auto px-4 pb-4">
+                <div id="courseUnitList" class="flex flex-col gap-1.5">
+                    <!-- Units render dynamically here -->
+                </div>
+            </div>
+
+            <!-- Footer: Reset progress option -->
+            <div class="bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/5 dark:border-white/5 p-3 flex-shrink-0 flex items-center justify-between">
+                <span class="text-[8px] text-gray-400">选择完点击即可开始拼读冒险哦！</span>
+                <button id="modalResetProgressBtn" class="text-[9px] font-bold text-red-500 hover:text-red-600 flex items-center gap-0.5 bg-red-500/10 hover:bg-red-500/15 px-2.5 py-1 rounded-lg transition-all active:scale-95">
+                    <span>🔄</span> 重置当前进度
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         /**
@@ -524,12 +677,17 @@
             imgRetryCount: 0,
             touch: { x: 0, y: 0 },
             isTrans: false,
+            currentBadgeFilter: 'all',
             wizard: {
                 level: 1,
                 exp: 0,
                 streak: 0,
                 stars: 0,
-                lastCheckIn: ""
+                lastCheckIn: "",
+                masteredList: [],
+                badges: [],
+                studyHistory: {},
+                badgeCounts: {}
             },
             ebbinghausHistory: {}
         };
@@ -625,52 +783,31 @@
         }
 
         function setupEventListeners() {
-            el.loginBtn.addEventListener('click', verifyPassword);
-            el.passInp.addEventListener('keydown', e => e.key === 'Enter' && verifyPassword());
+            if (el.loginBtn) el.loginBtn.addEventListener('click', verifyPassword);
+            if (el.passInp) el.passInp.addEventListener('keydown', e => e.key === 'Enter' && verifyPassword());
             
-            el.globalThemeBtn.addEventListener('click', toggleDarkMode);
-            el.themeToggleBtn.addEventListener('click', toggleDarkMode);
+            if (el.globalThemeBtn) el.globalThemeBtn.addEventListener('click', toggleDarkMode);
+            if (el.themeToggleBtn) el.themeToggleBtn.addEventListener('click', toggleDarkMode);
             
-            el.groupSelector.addEventListener('change', onGroupChange);
-            el.unitSelector.addEventListener('change', onUnitChange);
+            if (el.groupSelector) el.groupSelector.addEventListener('change', onGroupChange);
+            if (el.unitSelector) el.unitSelector.addEventListener('change', onUnitChange);
             
-            // 优化：重构代理触发逻辑，阻止桌面端多重事件冒泡和失效问题
-            const trigger = document.getElementById('unitSelectorTrigger');
-            if (trigger) {
-                const openDropdown = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    getAudioContext();
-                    
-                    // 强力对齐并聚焦
-                    el.unitSelector.focus();
-                    
-                    // 派发全兼容原生 Pointer 与 Mouse 事件
-                    const mEvent = new MouseEvent('click', {
-                        view: window,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    el.unitSelector.dispatchEvent(mEvent);
-                };
-                
-                trigger.addEventListener('click', openDropdown);
-                trigger.addEventListener('touchend', openDropdown);
-            }
+            // Initialize custom Course Selection library and animated Accent sliders
+            initCourseSelectionAndAccents();
             
-            el.modeSpellBtn.addEventListener('click', () => switchMode('spell'));
-            el.modeCardBtn.addEventListener('click', () => switchMode('card'));
+            if (el.modeSpellBtn) el.modeSpellBtn.addEventListener('click', () => switchMode('spell'));
+            if (el.modeCardBtn) el.modeCardBtn.addEventListener('click', () => switchMode('card'));
             
-            el.resetProgressBtn.addEventListener('click', resetAllProgress);
-            el.hintBtn.addEventListener('click', toggleHint);
-            el.speakBtn.addEventListener('click', speakWord);
-            el.checkBtn.addEventListener('click', check);
-            el.showAnswerBtn.addEventListener('click', flipToBack);
-            el.reviewBtn.addEventListener('click', reviewWrongWords);
+            if (el.resetProgressBtn) el.resetProgressBtn.addEventListener('click', resetAllProgress);
+            if (el.hintBtn) el.hintBtn.addEventListener('click', toggleHint);
+            if (el.speakBtn) el.speakBtn.addEventListener('click', speakWord);
+            if (el.checkBtn) el.checkBtn.addEventListener('click', check);
+            if (el.showAnswerBtn) el.showAnswerBtn.addEventListener('click', flipToBack);
+            if (el.reviewBtn) el.reviewBtn.addEventListener('click', reviewWrongWords);
             if (el.reviewVocabBtn) {
                 el.reviewVocabBtn.addEventListener('click', reviewVocabWords);
             }
-            el.exitReviewBtn.addEventListener('click', exitReviewMode);
+            if (el.exitReviewBtn) el.exitReviewBtn.addEventListener('click', exitReviewMode);
             
             if (el.vocabToggleBtnFront) {
                 el.vocabToggleBtnFront.addEventListener('click', e => { e.stopPropagation(); toggleVocab(); });
@@ -678,8 +815,41 @@
             if (el.vocabToggleBtnBack) {
                 el.vocabToggleBtnBack.addEventListener('click', e => { e.stopPropagation(); toggleVocab(); });
             }
-            el.pronounceBtn.addEventListener('click', handlePronunciationCheck);
-            el.wizardCheckInBtn.addEventListener('click', performDailyCheckIn);
+            if (el.pronounceBtn) el.pronounceBtn.addEventListener('click', handlePronunciationCheck);
+            if (el.wizardCheckInBtn) el.wizardCheckInBtn.addEventListener('click', performDailyCheckIn);
+            
+            // Badge filter tab events
+            document.querySelectorAll('.badge-filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const filter = e.currentTarget.getAttribute('data-badge-filter');
+                    state.currentBadgeFilter = filter;
+                    renderBadges();
+                });
+            });
+            
+            // Open/Close separate Magic Sanctuary page
+            const wizardEntryBtn = document.getElementById('wizardEntryBtn');
+            if (wizardEntryBtn) {
+                wizardEntryBtn.addEventListener('click', () => {
+                    const sanctuary = document.getElementById('wizardSanctuaryModal');
+                    if (sanctuary) {
+                        sanctuary.classList.remove('hidden');
+                        updateWizardUI();
+                    }
+                });
+            }
+
+            const closeSanctuaryBtn = document.getElementById('closeSanctuaryBtn');
+            if (closeSanctuaryBtn) {
+                closeSanctuaryBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const sanctuary = document.getElementById('wizardSanctuaryModal');
+                    if (sanctuary) {
+                        sanctuary.classList.add('hidden');
+                    }
+                });
+            }
             
             const ebbinghausBtn = document.getElementById('ebbinghausDueReminder');
             if (ebbinghausBtn) {
@@ -689,32 +859,36 @@
                 });
             }
             
-            el.userInput.addEventListener('input', e => filterInput(e.target));
+            if (el.userInput) el.userInput.addEventListener('input', e => filterInput(e.target));
 
-            el.ankiGradingButtons.addEventListener('click', e => {
-                const btn = e.target.closest('.anki-btn');
-                if (btn) handleAnkiFeedback(btn.dataset.level);
-            });
+            if (el.ankiGradingButtons) {
+                el.ankiGradingButtons.addEventListener('click', e => {
+                    const btn = e.target.closest('.anki-btn');
+                    if (btn) handleAnkiFeedback(btn.dataset.level);
+                });
+            }
 
-            el.mainCard.addEventListener('touchstart', e => {
-                state.touch.x = e.changedTouches[0].screenX;
-                state.touch.y = e.changedTouches[0].screenY;
-            }, { passive: true });
+            if (el.mainCard) {
+                el.mainCard.addEventListener('touchstart', e => {
+                    state.touch.x = e.changedTouches[0].screenX;
+                    state.touch.y = e.changedTouches[0].screenY;
+                }, { passive: true });
 
-            el.mainCard.addEventListener('touchend', handleCardTouchEnd, { passive: false });
-            el.mainCard.addEventListener('click', e => {
-                if (e.target.closest('button, select, input, label') || e.target.closest('#unitSelectorTrigger')) return;
-                if (state.mode === 'card') {
-                    if (state.side === 'front') flipToBack();
-                } else {
-                    el.userInput.focus();
-                }
-            });
+                el.mainCard.addEventListener('touchend', handleCardTouchEnd, { passive: false });
+                el.mainCard.addEventListener('click', e => {
+                    if (e.target.closest('button, select, input, label') || e.target.closest('#unitSelectorTrigger')) return;
+                    if (state.mode === 'card') {
+                        if (state.side === 'front') flipToBack();
+                    } else {
+                        if (el.userInput) el.userInput.focus();
+                    }
+                });
+            }
 
             window.addEventListener('keydown', handlePhysicalKeyboard);
-            el.netImage.addEventListener('error', handleImageError);
-            el.localDropZone.addEventListener('click', () => el.localFileInp.click());
-            el.localFileInp.addEventListener('change', e => handleFileSelect(e.target));
+            if (el.netImage) el.netImage.addEventListener('error', handleImageError);
+            if (el.localDropZone) el.localDropZone.addEventListener('click', () => { if (el.localFileInp) el.localFileInp.click(); });
+            if (el.localFileInp) el.localFileInp.addEventListener('change', e => handleFileSelect(e.target));
         }
 
         async function sha256(str) {
@@ -775,6 +949,10 @@
                     state.wizard = { ...state.wizard, ...JSON.parse(wizardSaved) };
                 } catch(e){}
             }
+            if (!state.wizard.masteredList) state.wizard.masteredList = [];
+            if (!state.wizard.badges) state.wizard.badges = [];
+            if (!state.wizard.studyHistory) state.wizard.studyHistory = {};
+            if (!state.wizard.badgeCounts) state.wizard.badgeCounts = {};
             
             // Load Vocabulary Book
             const vocabSaved = localStorage.getItem('spell_saved_vocab_book');
@@ -801,6 +979,7 @@
         function toggleDarkMode() {
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('spell_dark_mode', isDark ? 'dark' : 'light');
+            renderStudyIntensityChart();
         }
         
         async function loadCSV(url, isInitial = false) {
@@ -822,10 +1001,20 @@
                         el.localDropZone.classList.add('hidden');
                         state.wordBank = r.data;
                         state.masteredWords.clear();
-                        state.currentIndex = isInitial ? parseInt(localStorage.getItem('spell_saved_index') || 0) : 0;
+                        
+                        // Load unit-specific index if possible
+                        const currentUnit = el.unitSelector ? el.unitSelector.value : '';
+                        const savedIndexKey = currentUnit ? 'spell_saved_index_' + currentUnit : 'spell_saved_index';
+                        state.currentIndex = isInitial ? parseInt(localStorage.getItem(savedIndexKey) || localStorage.getItem('spell_saved_index') || 0) : 0;
+                        
                         if (state.currentIndex >= state.wordBank.length) {
                             state.currentIndex = 0;
                         }
+                        
+                        if (currentUnit) {
+                            localStorage.setItem('spell_total_words_' + currentUnit, r.data.length);
+                        }
+                        
                         showCurrentWord();
                     } else {
                         showLoadError("数据空空如也");
@@ -899,6 +1088,10 @@
 
             if (!state.isReviewMode && !state.isVocabMode && state.mode === 'spell') {
                 localStorage.setItem('spell_saved_index', state.currentIndex);
+                const currentUnit = el.unitSelector ? el.unitSelector.value : '';
+                if (currentUnit) {
+                    localStorage.setItem('spell_saved_index_' + currentUnit, state.currentIndex);
+                }
             }
             
             setTimeout(speakWord, 100);
@@ -979,6 +1172,13 @@
                 setTimeout(() => {
                     addExp(expGained);
                     state.wizard.stars += starsGained;
+                    
+                    const wordToMark = bank[state.currentIndex]?.word;
+                    if (wordToMark) {
+                        markWordAsMastered(wordToMark);
+                    }
+                    checkAndUnlockBadges();
+                    
                     saveWizardState();
                     updateWizardUI();
                 }, 100);
@@ -1228,9 +1428,12 @@
                 state.currentIndex++;
                 addExp(5);
                 
+                markWordAsMastered(currentItem.word);
+                checkAndUnlockBadges();
+                
                 updateEbbinghausState(currentItem, true);
             } else if (level === 'easy') {
-                state.masteredWords.add(bank[state.currentIndex].word);
+                state.masteredWords.add(currentItem.word);
                 
                 // If in vocab mode, make sure to save the updated vocab book!
                 if (state.isVocabMode) {
@@ -1249,6 +1452,8 @@
 
                 addExp(15);
                 state.wizard.stars += 1;
+                markWordAsMastered(currentItem.word);
+                checkAndUnlockBadges();
                 saveWizardState();
                 updateWizardUI();
                 
@@ -1386,12 +1591,21 @@
 
         function onUnitChange() {
             state.isReviewMode = false;
-            localStorage.setItem('spell_saved_unit', el.unitSelector.value);
-            localStorage.removeItem('spell_saved_index');
+            const currentUnit = el.unitSelector.value;
+            localStorage.setItem('spell_saved_unit', currentUnit);
             
-            // 实时渲染当前所选框文字
-            el.activeUnitName.textContent = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
-            loadCSV(el.unitSelector.value);
+            // Retrieve unit-specific progress if exists
+            const savedIndex = localStorage.getItem('spell_saved_index_' + currentUnit);
+            if (savedIndex !== null) {
+                localStorage.setItem('spell_saved_index', savedIndex);
+            } else {
+                localStorage.removeItem('spell_saved_index');
+            }
+            
+            // Update header button text with formatted title
+            const rawText = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
+            el.activeUnitName.textContent = formatUnitName(rawText);
+            loadCSV(currentUnit);
         }
 
         function updateUnitOptions(isInitial = false) {
@@ -1406,8 +1620,278 @@
                 }
             }
             
-            el.activeUnitName.textContent = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
+            const rawText = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
+            el.activeUnitName.textContent = formatUnitName(rawText);
             loadCSV(el.unitSelector.value, isInitial);
+        }
+
+        // ==========================================
+        // COURSE SELECTION & ACCENT SLIDERS ENGINE
+        // ==========================================
+        let courseActiveTab = 'newConcept';
+        let courseSearchQuery = '';
+
+        function initCourseSelectionAndAccents() {
+            // Accent buttons interaction
+            const usBtn = document.getElementById('accent-us-btn');
+            const ukBtn = document.getElementById('accent-uk-btn');
+            const hiddenUS = document.getElementById('hiddenAccentUS');
+            const hiddenUK = document.getElementById('hiddenAccentUK');
+            const accentIndicator = document.getElementById('accent-segment-indicator');
+
+            function updateAccentUI(isUS) {
+                if (isUS) {
+                    if (hiddenUS) hiddenUS.checked = true;
+                    if (accentIndicator) accentIndicator.style.transform = 'translateX(0%)';
+                    if (usBtn) {
+                        usBtn.classList.add('font-black', 'text-iosText-light', 'dark:text-iosText-dark');
+                        usBtn.classList.remove('text-gray-400', 'text-gray-500');
+                    }
+                    if (ukBtn) {
+                        ukBtn.classList.remove('font-black', 'text-iosText-light', 'dark:text-iosText-dark');
+                        ukBtn.classList.add('text-gray-400', 'dark:text-gray-500');
+                    }
+                } else {
+                    if (hiddenUK) hiddenUK.checked = true;
+                    if (accentIndicator) accentIndicator.style.transform = 'translateX(100%)';
+                    if (ukBtn) {
+                        ukBtn.classList.add('font-black', 'text-iosText-light', 'dark:text-iosText-dark');
+                        ukBtn.classList.remove('text-gray-400', 'text-gray-500');
+                    }
+                    if (usBtn) {
+                        usBtn.classList.remove('font-black', 'text-iosText-light', 'dark:text-iosText-dark');
+                        usBtn.classList.add('text-gray-400', 'dark:text-gray-500');
+                    }
+                }
+            }
+
+            if (usBtn) usBtn.addEventListener('click', () => { updateAccentUI(true); speakWord(); });
+            if (ukBtn) ukBtn.addEventListener('click', () => { updateAccentUI(false); speakWord(); });
+
+            // Initialize accent from current state or radio selection
+            const initialUSChecked = hiddenUS ? hiddenUS.checked : true;
+            updateAccentUI(initialUSChecked);
+
+            // Open course selection page modal
+            const openBtn = document.getElementById('openCoursePageBtn');
+            const modal = document.getElementById('courseSelectionModal');
+            const closeBtn = document.getElementById('closeCourseSelectionBtn');
+
+            if (openBtn && modal) {
+                openBtn.addEventListener('click', () => {
+                    getAudioContext();
+                    modal.classList.remove('hidden');
+                    
+                    // Sync active tab to current selection group
+                    const currentGroup = el.groupSelector ? el.groupSelector.value : 'newConcept';
+                    switchCourseTab(currentGroup);
+                    
+                    // Clear search on open
+                    const searchInp = document.getElementById('courseSearchInput');
+                    if (searchInp) searchInp.value = '';
+                    courseSearchQuery = '';
+                    const clearBtn = document.getElementById('clearCourseSearchBtn');
+                    if (clearBtn) clearBtn.classList.add('hidden');
+                    
+                    renderCourseUnitsList();
+                });
+            }
+
+            if (closeBtn && modal) {
+                closeBtn.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                });
+            }
+
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Category Tab Button Click Listeners
+            const tabButtons = document.querySelectorAll('.course-category-tab');
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.getAttribute('data-group');
+                    switchCourseTab(group);
+                });
+            });
+
+            // Search input filtering
+            const searchInp = document.getElementById('courseSearchInput');
+            const clearSearchBtn = document.getElementById('clearCourseSearchBtn');
+            if (searchInp) {
+                searchInp.addEventListener('input', (e) => {
+                    courseSearchQuery = e.target.value.trim().toLowerCase();
+                    if (clearSearchBtn) {
+                        if (courseSearchQuery) {
+                            clearSearchBtn.classList.remove('hidden');
+                        } else {
+                            clearSearchBtn.classList.add('hidden');
+                        }
+                    }
+                    renderCourseUnitsList();
+                });
+            }
+
+            if (clearSearchBtn && searchInp) {
+                clearSearchBtn.addEventListener('click', () => {
+                    searchInp.value = '';
+                    courseSearchQuery = '';
+                    clearSearchBtn.classList.add('hidden');
+                    renderCourseUnitsList();
+                    searchInp.focus();
+                });
+            }
+
+            // Reset current unit progress from modal footer
+            const modalResetBtn = document.getElementById('modalResetProgressBtn');
+            if (modalResetBtn) {
+                modalResetBtn.addEventListener('click', () => {
+                    resetAllProgress();
+                    if (modal) modal.classList.add('hidden');
+                });
+            }
+        }
+
+        function switchCourseTab(group) {
+            courseActiveTab = group;
+            const tabs = document.querySelectorAll('.course-category-tab');
+            const indicator = document.getElementById('course-category-indicator');
+            
+            let index = 0;
+            tabs.forEach((tab, i) => {
+                const isMatch = tab.getAttribute('data-group') === group;
+                tab.classList.toggle('font-black', isMatch);
+                tab.classList.toggle('text-gray-900', isMatch);
+                tab.classList.toggle('dark:text-white', isMatch);
+                tab.classList.toggle('font-semibold', !isMatch);
+                tab.classList.toggle('text-gray-400', !isMatch);
+                tab.classList.toggle('dark:text-gray-500', !isMatch);
+                if (isMatch) index = i;
+            });
+
+            if (indicator) {
+                indicator.style.transform = `translateX(${index * 100}%)`;
+            }
+
+            renderCourseUnitsList();
+        }
+
+        function formatUnitName(text) {
+            const mappings = {
+                'ives_Business_Economy': '💼 商业与经济 (Business & Economy)',
+                'ives_Education_Learning': '🏫 教育与学习 (Education & Learning)',
+                'ives_Emotions_Abstract': '🎭 情感与抽象 (Emotions & Abstract)',
+                'ives_Environment_Nature': '🌲 环境与自然 (Environment & Nature)',
+                'ives_Health_Body': '🏥 健康与身体 (Health & Body)',
+                'ives_Science_Technology': '🚀 科学与技术 (Science & Tech)',
+                'ives_Society_People': '👥 社会与人文 (Society & People)',
+                'ives_Travel_Transport': '✈️ 旅游与交通 (Travel & Transport)'
+            };
+            if (mappings[text]) return mappings[text];
+            if (text.startsWith("课堂组 ")) {
+                return text.replace("课堂组 ", "🏫 课堂组 ");
+            }
+            if (text.startsWith("Unit ")) {
+                return "🎒 " + text;
+            }
+            return text;
+        }
+
+        function renderCourseUnitsList() {
+            const container = document.getElementById('courseUnitList');
+            if (!container) return;
+
+            const units = CONFIG.COURSE_DATA[courseActiveTab] || [];
+            
+            const filteredUnits = units.filter(u => {
+                const textLower = u.text.toLowerCase();
+                const formattedLower = formatUnitName(u.text).toLowerCase();
+                return textLower.includes(courseSearchQuery) || formattedLower.includes(courseSearchQuery);
+            });
+
+            if (filteredUnits.length === 0) {
+                container.innerHTML = `
+                    <div class="py-12 text-center text-gray-400 dark:text-gray-500 text-xs">
+                        <span class="text-xl">📭</span>
+                        <p class="mt-2 font-semibold">没有找到相关的课程或单元</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const currentActiveUnitValue = el.unitSelector ? el.unitSelector.value : '';
+
+            container.innerHTML = filteredUnits.map(u => {
+                const isCurrent = u.value === currentActiveUnitValue;
+                let progressDesc = '未开始';
+                const savedIndex = localStorage.getItem('spell_saved_index_' + u.value);
+                const totalWords = localStorage.getItem('spell_total_words_' + u.value);
+                
+                if (isCurrent && state.wordBank?.length > 0) {
+                    const pct = state.wordBank.length ? Math.round((state.currentIndex / state.wordBank.length) * 100) : 0;
+                    progressDesc = `学习中: 已学至第 ${state.currentIndex + 1}/${state.wordBank.length} 词 (${pct}%)`;
+                } else if (savedIndex !== null) {
+                    if (totalWords !== null) {
+                        const pct = Math.round((parseInt(savedIndex) / parseInt(totalWords)) * 100);
+                        progressDesc = `已学习至第 ${parseInt(savedIndex) + 1}/${totalWords} 词 (${pct}%)`;
+                    } else {
+                        progressDesc = `已学习至第 ${parseInt(savedIndex) + 1} 词`;
+                    }
+                }
+
+                return `
+                    <div class="course-unit-item flex items-center justify-between p-3 ${isCurrent ? 'bg-blue-500/10 dark:bg-blue-500/15 border-blue-500/25' : 'bg-white dark:bg-[#2c2c2e] border-black/[0.04] dark:border-white/[0.04]'} hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded-2xl border transition-all cursor-pointer active:scale-[0.98]" data-unit-value="${u.value}" data-unit-group="${courseActiveTab}">
+                        <div class="flex items-center gap-2.5 min-w-0 text-left">
+                            <div class="w-7 h-7 flex items-center justify-center rounded-full ${isCurrent ? 'bg-[#007aff]/15 text-[#007aff]' : 'bg-black/[0.03] dark:bg-white/[0.05] text-xs'} flex-shrink-0 font-medium">
+                                ${isCurrent ? '⚡' : '📖'}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-[10px] font-black ${isCurrent ? 'text-[#007aff] dark:text-[#0a84ff]' : 'text-gray-800 dark:text-gray-100'} truncate">${formatUnitName(u.text)}</h4>
+                                <p class="text-[8px] text-gray-400 dark:text-gray-500 font-semibold mt-0.5">${progressDesc}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            ${isCurrent ? `
+                                <span class="text-[8px] font-black text-[#007aff] dark:text-[#0a84ff] bg-[#007aff]/10 dark:bg-[#0a84ff]/15 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                    正在学
+                                </span>
+                            ` : `
+                                <span class="text-[10px] text-gray-300 dark:text-gray-600">❯</span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const items = container.querySelectorAll('.course-unit-item');
+            items.forEach(item => {
+                item.addEventListener('click', () => {
+                    const unitValue = item.getAttribute('data-unit-value');
+                    const groupValue = item.getAttribute('data-unit-group');
+                    
+                    if (el.groupSelector) {
+                        el.groupSelector.value = groupValue;
+                        localStorage.setItem('spell_saved_group', groupValue);
+                    }
+                    if (el.unitSelector) {
+                        const unitsForGroup = CONFIG.COURSE_DATA[groupValue] || [];
+                        el.unitSelector.innerHTML = unitsForGroup.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
+                        el.unitSelector.value = unitValue;
+                    }
+
+                    onUnitChange();
+                    
+                    const modal = document.getElementById('courseSelectionModal');
+                    if (modal) modal.classList.add('hidden');
+
+                    showToast("📖 成功载入新单元！");
+                });
+            });
         }
 
         function toggleHint() { 
@@ -1505,16 +1989,20 @@
         //         WIZARD GROWTH SYSTEM
         // ==========================================
         function getLevelThreshold(level) {
-            // Significant increase in difficulty (exponential scaling)
-            return Math.floor(250 * Math.pow(1.5, level - 1) + 150 * level);
+            // CHALLENGING CURVE: base 300, multiplier scales at 1.3 per level plus 200 per level
+            return Math.floor(300 * Math.pow(1.3, level - 1) + 200 * level);
         }
 
         function getWizardTitle(level) {
-            if (level <= 2) return "🔮 见习魔法学徒";
-            if (level <= 4) return "🧪 药水配方师";
-            if (level <= 6) return "⚡ 元素法术使";
-            if (level <= 9) return "🌀 秘奥魔导士";
-            return "👑 大魔导师";
+            if (level <= 3) return "🔮 见习魔法学徒";
+            if (level <= 7) return "🧪 药水配方师";
+            if (level <= 12) return "⚡ 元素法术使";
+            if (level <= 18) return "🌀 秘奥魔导士";
+            if (level <= 25) return "🌟 幻境织梦者";
+            if (level <= 32) return "☄️ 星辰主宰";
+            if (level <= 40) return "👑 大魔导师";
+            if (level <= 49) return "🌌 时空贤者";
+            return "🧙‍♂️ 终焉至高神";
         }
 
         function getTodayDateString() {
@@ -1560,10 +2048,666 @@
                     el.wizardCheckInBtn.classList.remove('opacity-60', 'pointer-events-none');
                 }
             }
+
+            // Update Mini Entry Widget on main page
+            const miniLvl = document.getElementById('miniWizardLevel');
+            if (miniLvl) miniLvl.textContent = `Lv.${state.wizard.level}`;
+            const miniTitle = document.getElementById('miniWizardTitle');
+            if (miniTitle) miniTitle.textContent = getWizardTitle(state.wizard.level);
+            const miniStreak = document.getElementById('miniWizardStreak');
+            if (miniStreak) miniStreak.textContent = `${state.wizard.streak}天`;
+            const miniBadges = document.getElementById('miniWizardBadgesCount');
+            if (miniBadges) {
+                const unlockedCount = state.wizard.badges?.length || 0;
+                miniBadges.textContent = `${unlockedCount}勋章`;
+            }
+            const unlockedBadgeLabel = document.getElementById('unlockedBadgesCount');
+            if (unlockedBadgeLabel) {
+                const unlockedCount = state.wizard.badges?.length || 0;
+                unlockedBadgeLabel.textContent = `已解锁: ${unlockedCount}/${MAGIC_BADGES.length}`;
+            }
+
+            renderBadges();
+            renderStudyIntensityChart();
+        }
+
+        function getLast7Days() {
+            const list = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const dateStr = `${yyyy}-${mm}-${dd}`;
+                const label = `${d.getMonth() + 1}/${d.getDate()}`;
+                list.push({ dateStr, label });
+            }
+            return list;
+        }
+
+        function renderStudyIntensityChart() {
+            const container = d3.select("#studyIntensityChart");
+            if (container.empty()) return;
+            
+            // Clear existing content
+            container.html("");
+            
+            // Get past 7 days data
+            const days = getLast7Days();
+            if (!state.wizard.studyHistory) {
+                state.wizard.studyHistory = {};
+            }
+            
+            // Map the history
+            const data = days.map(d => {
+                return {
+                    label: d.label,
+                    value: state.wizard.studyHistory[d.dateStr] || 0
+                };
+            });
+            
+            // Calculate total for label
+            const totalThisWeek = data.reduce((acc, curr) => acc + curr.value, 0);
+            const totalTextEl = document.getElementById("wizardWeeklyTotalText");
+            if (totalTextEl) {
+                totalTextEl.textContent = `本周累计: ${totalThisWeek} EXP`;
+            }
+            
+            // Svg setup
+            const width = 310;
+            const height = 64;
+            const paddingLeft = 10;
+            const paddingRight = 10;
+            const paddingTop = 12;
+            const paddingBottom = 12;
+            
+            const svg = container.append("svg")
+                .attr("width", "100%")
+                .attr("height", height)
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .attr("preserveAspectRatio", "xMidYMid meet");
+                
+            // Scales
+            const xScale = d3.scaleBand()
+                .domain(data.map(d => d.label))
+                .range([paddingLeft, width - paddingRight])
+                .padding(0.35);
+                
+            const maxValue = d3.max(data, d => d.value) || 10;
+            const yScale = d3.scaleLinear()
+                .domain([0, maxValue])
+                .range([height - paddingBottom, paddingTop]);
+                
+            // Draw Bars
+            svg.selectAll(".bar")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => xScale(d.label))
+                .attr("y", height - paddingBottom) // Start from bottom for transition
+                .attr("width", xScale.bandwidth())
+                .attr("height", 0) // Start from 0 for transition
+                .attr("rx", 3) // rounded top
+                .attr("ry", 3)
+                .attr("fill", "url(#barGradient)")
+                // Transition
+                .transition()
+                .duration(600)
+                .delay((d, i) => i * 40)
+                .attr("y", d => yScale(d.value))
+                .attr("height", d => Math.max(2, (height - paddingBottom) - yScale(d.value))); // at least 2px height for visual feedback
+                
+            // Draw Gradients
+            const defs = svg.append("defs");
+            const barGrad = defs.append("linearGradient")
+                .attr("id", "barGradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "0%")
+                .attr("y2", "100%");
+                
+            barGrad.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "#c084fc"); // purple-400
+            barGrad.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "#6366f1"); // indigo-500
+                
+            // Draw value labels on top of bars
+            svg.selectAll(".val-label")
+                .data(data)
+                .enter()
+                .append("text")
+                .attr("class", "val-label")
+                .attr("x", d => xScale(d.label) + xScale.bandwidth() / 2)
+                .attr("y", d => yScale(d.value) - 3)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "7px")
+                .attr("font-weight", "bold")
+                .attr("fill", document.documentElement.classList.contains("dark") ? "#c084fc" : "#7c3aed")
+                .attr("opacity", 0)
+                .text(d => d.value > 0 ? d.value : "")
+                .transition()
+                .duration(500)
+                .delay((d, i) => 200 + i * 40)
+                .attr("opacity", 1);
+                
+            // Draw X-axis Labels
+            svg.selectAll(".x-label")
+                .data(data)
+                .enter()
+                .append("text")
+                .attr("class", "x-label")
+                .attr("x", d => xScale(d.label) + xScale.bandwidth() / 2)
+                .attr("y", height - 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "7.5px")
+                .attr("font-weight", "black")
+                .attr("fill", document.documentElement.classList.contains("dark") ? "#9ca3af" : "#6b7280")
+                .text(d => d.label);
+        }
+
+        // ==========================================
+        //         MAGIC BADGES ENGINE
+        // ==========================================
+        const MAGIC_BADGES = [
+            // Word count badges
+            {
+                id: 'badge_first_step',
+                name: '初试身手',
+                desc: '掌握第 1 个词汇',
+                icon: '🌱',
+                check: () => (state.wizard.masteredList?.length || 0) >= 1
+            },
+            {
+                id: 'badge_words_10',
+                name: '渐入佳境',
+                desc: '累计掌握 10 个词汇',
+                icon: '🍃',
+                check: () => (state.wizard.masteredList?.length || 0) >= 10
+            },
+            {
+                id: 'badge_words_30',
+                name: '超凡启蒙',
+                desc: '累计掌握 30 个词汇',
+                icon: '🌿',
+                check: () => (state.wizard.masteredList?.length || 0) >= 30
+            },
+            {
+                id: 'badge_words_50',
+                name: '咒语学者',
+                desc: '累计掌握 50 个词汇',
+                icon: '📖',
+                check: () => (state.wizard.masteredList?.length || 0) >= 50
+            },
+            {
+                id: 'badge_words_100',
+                name: '词汇魔导士',
+                desc: '累计掌握 100 个词汇',
+                icon: '🎓',
+                check: () => (state.wizard.masteredList?.length || 0) >= 100
+            },
+            {
+                id: 'badge_words_200',
+                name: '知识巨匠',
+                desc: '累计掌握 200 个词汇',
+                icon: '🏺',
+                check: () => (state.wizard.masteredList?.length || 0) >= 200
+            },
+            {
+                id: 'badge_words_500',
+                name: '贤者之石',
+                desc: '累计掌握 500 个词汇',
+                icon: '🔮',
+                check: () => (state.wizard.masteredList?.length || 0) >= 500
+            },
+            {
+                id: 'badge_words_1000',
+                name: '禁忌魔导',
+                desc: '累计掌握 1000 个词汇',
+                icon: '📜',
+                check: () => (state.wizard.masteredList?.length || 0) >= 1000
+            },
+
+            // Streak badges
+            {
+                id: 'badge_streak_3',
+                name: '坚持不懈',
+                desc: '连续打卡 3 天',
+                icon: '🔥',
+                check: () => (state.wizard.streak || 0) >= 3
+            },
+            {
+                id: 'badge_streak_7',
+                name: '神圣行者',
+                desc: '连续打卡 7 天',
+                icon: '👑',
+                check: () => (state.wizard.streak || 0) >= 7
+            },
+            {
+                id: 'badge_streak_15',
+                name: '永恒誓约',
+                desc: '连续打卡 15 天',
+                icon: '🐉',
+                check: () => (state.wizard.streak || 0) >= 15
+            },
+            {
+                id: 'badge_streak_30',
+                name: '信仰化身',
+                desc: '连续打卡 30 天',
+                icon: '☄️',
+                check: () => (state.wizard.streak || 0) >= 30
+            },
+            {
+                id: 'badge_streak_100',
+                name: '永生传奇',
+                desc: '连续打卡 100 天',
+                icon: '🌌',
+                check: () => (state.wizard.streak || 0) >= 100
+            },
+
+            // Star badges
+            {
+                id: 'badge_stars_100',
+                name: '星之璀璨',
+                desc: '积累 100 颗魔法星星',
+                icon: '✨',
+                check: () => (state.wizard.stars || 0) >= 100
+            },
+            {
+                id: 'badge_stars_500',
+                name: '璀璨星河',
+                desc: '积累 500 颗魔法星星',
+                icon: '🌟',
+                check: () => (state.wizard.stars || 0) >= 500
+            },
+            {
+                id: 'badge_stars_1500',
+                name: '宇宙星盘',
+                desc: '积累 1500 颗魔法星星',
+                icon: '🪐',
+                check: () => (state.wizard.stars || 0) >= 1500
+            },
+            {
+                id: 'badge_stars_5000',
+                name: '太阳之耀',
+                desc: '积累 5000 颗魔法星星',
+                icon: '☀️',
+                check: () => (state.wizard.stars || 0) >= 5000
+            }
+        ];
+
+        function markWordAsMastered(word) {
+            if (!word) return;
+            const normalized = word.trim().toLowerCase();
+            if (!state.wizard.masteredList) {
+                state.wizard.masteredList = [];
+            }
+            if (!state.wizard.masteredList.includes(normalized)) {
+                state.wizard.masteredList.push(normalized);
+                saveWizardState();
+                checkAndUnlockBadges();
+            }
+        }
+
+        function checkAndUnlockBadges() {
+            if (!state.wizard.badges) state.wizard.badges = [];
+            let newlyUnlocked = [];
+            MAGIC_BADGES.forEach(badge => {
+                if (badge.check() && !state.wizard.badges.includes(badge.id)) {
+                    state.wizard.badges.push(badge.id);
+                    newlyUnlocked.push(badge);
+                }
+            });
+
+            if (newlyUnlocked.length > 0) {
+                saveWizardState();
+                updateWizardUI();
+                newlyUnlocked.forEach(badge => {
+                    triggerBadgeUnlockAnimation(badge);
+                });
+            }
+        }
+
+        function triggerBadgeUnlockAnimation(badge) {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.connect(g);
+                g.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+                osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
+                g.gain.setValueAtTime(0.15, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.6);
+            } catch (e) {}
+
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in px-4';
+            overlay.innerHTML = `
+                <div class="bg-gradient-to-b from-violet-950 to-indigo-950 border border-violet-500/30 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl relative overflow-hidden transform scale-90 opacity-0 transition-all duration-300 ease-out" id="badgeUnlockModal">
+                    <div class="absolute -top-12 -left-12 w-24 h-24 bg-violet-500/20 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-12 -right-12 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl"></div>
+                    
+                    <div class="relative z-10 flex flex-col items-center">
+                        <span class="text-xs font-black tracking-widest text-violet-400 uppercase mb-1">✨ 恭喜获得魔法勋章 ✨</span>
+                        <div class="w-20 h-20 bg-violet-500/10 dark:bg-white/5 border border-violet-400/20 rounded-full flex items-center justify-center text-4xl shadow-lg shadow-violet-500/10 my-4 animate-bounce relative select-none">
+                            \${badge.icon}
+                            <span class="absolute -top-1 -right-1 text-sm animate-pulse">⭐</span>
+                            <span class="absolute -bottom-1 -left-1 text-sm animate-pulse">🌟</span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white mb-2">\${badge.name}</h3>
+                        <p class="text-xs text-gray-300 mb-6 leading-relaxed bg-black/20 py-2 px-3 rounded-xl border border-white/5">\${badge.desc}</p>
+                        <button id="closeBadgeUnlockBtn" class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all duration-200">
+                            点亮徽章
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            setTimeout(() => {
+                const modal = document.getElementById('badgeUnlockModal');
+                if (modal) {
+                    modal.classList.remove('scale-90', 'opacity-0');
+                    modal.classList.add('scale-100', 'opacity-100');
+                }
+            }, 50);
+
+            triggerEpicFireworks();
+
+            overlay.querySelector('#closeBadgeUnlockBtn').addEventListener('click', () => {
+                const modal = document.getElementById('badgeUnlockModal');
+                if (modal) {
+                    modal.classList.remove('scale-100', 'opacity-100');
+                    modal.classList.add('scale-95', 'opacity-0');
+                }
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            });
+        }
+
+        function getBadgeProgress(badge) {
+            let current = 0;
+            let target = 1;
+            let unit = "个";
+            
+            if (badge.id === 'badge_first_step') {
+                current = state.wizard.masteredList?.length || 0;
+                target = 1;
+                unit = "个词汇";
+            } else if (badge.id.startsWith("badge_words_")) {
+                current = state.wizard.masteredList?.length || 0;
+                target = parseInt(badge.id.replace("badge_words_", ""), 10);
+                unit = "个词汇";
+            } else if (badge.id.startsWith("badge_streak_")) {
+                current = state.wizard.streak || 0;
+                target = parseInt(badge.id.replace("badge_streak_", ""), 10);
+                unit = "天打卡";
+            } else if (badge.id.startsWith("badge_stars_")) {
+                current = state.wizard.stars || 0;
+                target = parseInt(badge.id.replace("badge_stars_", ""), 10);
+                unit = "颗魔法星";
+            }
+            
+            const percent = Math.min(100, Math.floor((current / target) * 100));
+            return { current, target, unit, percent };
+        }
+
+        function getBadgeObtainCount(badge) {
+            if (!state.wizard.badges) state.wizard.badges = [];
+            if (!state.wizard.badgeCounts) state.wizard.badgeCounts = {};
+            
+            const isUnlocked = state.wizard.badges.includes(badge.id) || badge.check();
+            if (!isUnlocked) return 0;
+            
+            let count = state.wizard.badgeCounts[badge.id] || 1;
+            
+            if (badge.id === 'badge_first_step') {
+                count = Math.max(count, state.wizard.masteredList?.length || 1);
+            } else if (badge.id === 'badge_words_10') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 10));
+            } else if (badge.id === 'badge_words_30') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 30));
+            } else if (badge.id === 'badge_words_50') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 50));
+            } else if (badge.id === 'badge_words_100') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 100));
+            } else if (badge.id === 'badge_words_200') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 200));
+            } else if (badge.id === 'badge_words_500') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 500));
+            } else if (badge.id === 'badge_words_1000') {
+                count = Math.max(count, Math.floor((state.wizard.masteredList?.length || 0) / 1000));
+            } else if (badge.id === 'badge_streak_3') {
+                count = Math.max(count, Math.floor((state.wizard.streak || 0) / 3));
+            } else if (badge.id === 'badge_streak_7') {
+                count = Math.max(count, Math.floor((state.wizard.streak || 0) / 7));
+            } else if (badge.id === 'badge_streak_15') {
+                count = Math.max(count, Math.floor((state.wizard.streak || 0) / 15));
+            } else if (badge.id === 'badge_streak_30') {
+                count = Math.max(count, Math.floor((state.wizard.streak || 0) / 30));
+            } else if (badge.id === 'badge_streak_100') {
+                count = Math.max(count, Math.floor((state.wizard.streak || 0) / 100));
+            } else if (badge.id === 'badge_stars_100') {
+                count = Math.max(count, Math.floor((state.wizard.stars || 0) / 100));
+            } else if (badge.id === 'badge_stars_500') {
+                count = Math.max(count, Math.floor((state.wizard.stars || 0) / 500));
+            } else if (badge.id === 'badge_stars_1500') {
+                count = Math.max(count, Math.floor((state.wizard.stars || 0) / 1500));
+            } else if (badge.id === 'badge_stars_5000') {
+                count = Math.max(count, Math.floor((state.wizard.stars || 0) / 5000));
+            }
+            
+            return Math.max(1, count);
+        }
+
+        function showBadgeDetailModal(badge) {
+            const isUnlocked = state.wizard.badges.includes(badge.id) || badge.check();
+            const obtainCount = getBadgeObtainCount(badge);
+            const progress = getBadgeProgress(badge);
+            
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const g = ctx.createGain();
+                osc.connect(g);
+                g.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(isUnlocked ? 880 : 440, ctx.currentTime);
+                g.gain.setValueAtTime(0.04, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            } catch(e){}
+
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in px-4';
+            overlay.id = "badgeDetailModalOverlay";
+            
+            const badgeBgClass = isUnlocked 
+                ? 'bg-gradient-to-b from-violet-50 via-white to-violet-50 dark:from-slate-900 dark:via-[#1c1c1e] dark:to-slate-950 border-violet-400/40 dark:border-violet-500/30' 
+                : 'bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-[#1c1c1e] dark:via-[#121214] dark:to-black border-gray-300/30 dark:border-white/10';
+                
+            overlay.innerHTML = `
+                <div class="w-full max-w-xs p-5 text-center shadow-2xl rounded-3xl border ${badgeBgClass} relative overflow-hidden transform scale-95 opacity-0 transition-all duration-300 ease-out" id="badgeDetailInner">
+                    ${isUnlocked ? `
+                        <div class="absolute -top-12 -left-12 w-24 h-24 bg-violet-400/20 rounded-full blur-2xl"></div>
+                        <div class="absolute -bottom-12 -right-12 w-24 h-24 bg-indigo-400/20 rounded-full blur-2xl"></div>
+                    ` : ''}
+
+                    <div class="relative z-10 flex flex-col items-center">
+                        <span class="text-[8px] font-black tracking-widest uppercase px-2 py-0.5 rounded-full ${
+                            isUnlocked 
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                            : 'bg-gray-200 text-gray-500 dark:bg-white/5 dark:text-gray-400'
+                        }">
+                            ${isUnlocked ? '🟢 已点亮' : '🔒 未点亮'}
+                        </span>
+                        
+                        <div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl my-3 shadow-lg select-none relative ${
+                            isUnlocked 
+                            ? 'bg-violet-500/15 border border-violet-400/30 shadow-violet-500/10' 
+                            : 'bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 grayscale opacity-35'
+                        }">
+                            ${badge.icon}
+                        </div>
+                        
+                        <h3 class="text-xs font-black text-gray-900 dark:text-white mb-1">${badge.name}</h3>
+                        
+                        <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium mb-3 bg-black/[0.02] dark:bg-white/5 py-1.5 px-3 rounded-lg border border-black/[0.03] dark:border-white/5 w-full">
+                            ${badge.desc}
+                        </p>
+
+                        <div class="w-full mb-3 text-left">
+                            <div class="flex justify-between items-center text-[8px] font-bold text-gray-500 dark:text-gray-400 mb-1 px-1">
+                                <span>解锁进度</span>
+                                <span>${progress.current} / ${progress.target} ${progress.unit}</span>
+                            </div>
+                            <div class="w-full bg-black/5 dark:bg-white/5 rounded-full h-1 overflow-hidden">
+                                <div class="bg-gradient-to-r from-violet-500 to-indigo-500 h-full transition-all duration-500" style="width: ${progress.percent}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-black/[0.03] dark:bg-white/[0.03] rounded-xl p-2.5 text-left border border-black/[0.02] dark:border-white/5 mb-4">
+                            <div class="flex items-center justify-between text-[9px] font-black text-gray-800 dark:text-white mb-1">
+                                <span class="flex items-center gap-1">🎖️ 获得次数:</span>
+                                <span class="text-violet-600 dark:text-violet-400 text-[10px] font-black bg-violet-500/10 dark:bg-violet-500/20 px-2 py-0.5 rounded-md">${obtainCount} 次</span>
+                            </div>
+                            <p class="text-[7.5px] text-gray-400 dark:text-gray-500 leading-normal">
+                                ${isUnlocked 
+                                    ? `你已累计获得该勋章 ${obtainCount} 次！继续努力修行可以获得更多勋章，快去研习更多魔法魔咒吧！` 
+                                    : '该勋章尚未解锁。完成上方的解锁条件即可获得该成就，开启你的魔法大门！'}
+                            </p>
+                        </div>
+                        
+                        <button id="closeBadgeDetailBtn" class="w-full bg-gray-900 hover:bg-gray-800 dark:bg-white/10 dark:hover:bg-white/15 text-white dark:text-white font-bold text-[9px] py-1.5 rounded-xl transition-all active:scale-95 shadow-sm">
+                            关闭
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => {
+                const inner = document.getElementById('badgeDetailInner');
+                if (inner) {
+                    inner.classList.remove('scale-95', 'opacity-0');
+                    inner.classList.add('scale-100', 'opacity-100');
+                }
+            }, 50);
+            
+            const closeBtn = overlay.querySelector('#closeBadgeDetailBtn');
+            const doClose = () => {
+                const inner = document.getElementById('badgeDetailInner');
+                if (inner) {
+                    inner.classList.remove('scale-100', 'opacity-100');
+                    inner.classList.add('scale-95', 'opacity-0');
+                }
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            };
+            
+            closeBtn.addEventListener('click', doClose);
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    doClose();
+                }
+            });
+        }
+
+        function updateBadgeFilterTabsUI() {
+            document.querySelectorAll('.badge-filter-tab').forEach(t => {
+                const filter = t.getAttribute('data-badge-filter');
+                if (filter === state.currentBadgeFilter) {
+                    t.classList.remove('text-gray-500', 'dark:text-gray-400');
+                    t.classList.add('text-violet-700', 'dark:text-violet-200', 'bg-white', 'dark:bg-white/10', 'shadow-sm');
+                } else {
+                    t.classList.remove('text-violet-700', 'dark:text-violet-200', 'bg-white', 'dark:bg-white/10', 'shadow-sm');
+                    t.classList.add('text-gray-500', 'dark:text-gray-400');
+                }
+            });
+        }
+
+        function renderBadges() {
+            const container = document.getElementById('wizardBadgesContainer');
+            if (!container) return;
+            
+            if (!state.wizard.badges) state.wizard.badges = [];
+            
+            container.innerHTML = '';
+            
+            updateBadgeFilterTabsUI();
+
+            const filteredBadges = MAGIC_BADGES.filter(badge => {
+                const isUnlocked = state.wizard.badges.includes(badge.id) || badge.check();
+                if (state.currentBadgeFilter === 'unlocked') {
+                    return isUnlocked;
+                } else if (state.currentBadgeFilter === 'locked') {
+                    return !isUnlocked;
+                }
+                return true;
+            });
+
+            if (filteredBadges.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'col-span-5 text-center py-4 text-[8px] text-gray-400 dark:text-gray-500 font-bold select-none';
+                if (state.currentBadgeFilter === 'unlocked') {
+                    placeholder.textContent = '🔮 暂无已点亮的勋章，快去研习魔咒吧！';
+                } else if (state.currentBadgeFilter === 'locked') {
+                    placeholder.textContent = '✨ 恭喜！你已点亮全部魔法勋章！';
+                } else {
+                    placeholder.textContent = '🧙‍♂️ 暂无勋章数据';
+                }
+                container.appendChild(placeholder);
+                return;
+            }
+
+            filteredBadges.forEach(badge => {
+                const isUnlocked = state.wizard.badges.includes(badge.id) || badge.check();
+                if (isUnlocked && !state.wizard.badges.includes(badge.id)) {
+                    state.wizard.badges.push(badge.id);
+                    saveWizardState();
+                }
+
+                const badgeEl = document.createElement('div');
+                badgeEl.className = `w-7 h-7 rounded-full flex items-center justify-center text-sm cursor-pointer transition-all duration-300 hover:scale-110 active:scale-90 relative select-none ${
+                    isUnlocked 
+                    ? 'bg-violet-500/15 border border-violet-400/30 shadow-sm shadow-violet-500/10' 
+                    : 'bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 grayscale opacity-35'
+                }`;
+                badgeEl.title = `${badge.name}: ${badge.desc} (${isUnlocked ? '已点亮' : '未点亮'})`;
+                badgeEl.innerHTML = badge.icon;
+                
+                badgeEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showBadgeDetailModal(badge);
+                });
+                
+                container.appendChild(badgeEl);
+            });
         }
 
         function addExp(amount) {
             state.wizard.exp += amount;
+            
+            // Record study intensity (EXP gained is standard measure of study intensity)
+            const todayStr = getTodayDateString();
+            if (!state.wizard.studyHistory) {
+                state.wizard.studyHistory = {};
+            }
+            state.wizard.studyHistory[todayStr] = (state.wizard.studyHistory[todayStr] || 0) + amount;
+            
             showToast(`✨ EXP +${amount}`);
             checkLevelUp();
             saveWizardState();
@@ -1633,6 +2777,7 @@
             
             state.wizard.lastCheckIn = todayStr;
             state.wizard.stars += 10;
+            checkAndUnlockBadges();
             saveWizardState();
             updateWizardUI();
             
@@ -1748,19 +2893,43 @@
                     const currentWord = getCurrentWordObject();
                     if (!currentWord) return;
                     
-                    const targetStr = currentWord.word.trim().toLowerCase().replace(/[^a-z]/g, '');
-                    const spokenStr = event.results[0][0].transcript.trim().toLowerCase().replace(/[^a-z]/g, '');
+                    const rawWord = currentWord.word;
+                    // Split the target by typical phrase alternatives: slashes, commas, or semicolons
+                    const parts = rawWord.split(/[\/,;，；]/);
                     
-                    if (spokenStr === targetStr) {
+                    // Function to normalize strings by:
+                    // 1. removing brackets/parentheses and their content (e.g. "(something)" or Chinese equivalents)
+                    // 2. keeping only standard alphanumeric characters (a-z, 0-9)
+                    const cleanString = (str) => {
+                        return str.trim()
+                                  .toLowerCase()
+                                  .replace(/\([^)]*\)/g, '')
+                                  .replace(/（[^）]*）/g, '')
+                                  .replace(/[^a-z0-9]/g, '');
+                    };
+                    
+                    const cleanParts = parts.map(p => cleanString(p)).filter(p => p.length > 0);
+                    const spokenStr = cleanString(event.results[0][0].transcript);
+                    
+                    const isMatch = cleanParts.some(targetPart => {
+                        // Exact clean match or check if either contains the other as a fallback for rich phrases
+                        return spokenStr === targetPart || 
+                               (targetPart.length > 3 && spokenStr.includes(targetPart)) ||
+                               (spokenStr.length > 3 && targetPart.includes(spokenStr));
+                    });
+                    
+                    if (isMatch) {
                         playSound('success');
                         triggerEpicFireworks();
                         addExp(15);
                         state.wizard.stars += 2;
+                        markWordAsMastered(currentWord.word);
+                        checkAndUnlockBadges();
                         saveWizardState();
                         updateWizardUI();
                         
-                        // Auto-fill
-                        state.currentInputValue = currentWord.word.toLowerCase();
+                        // Auto-fill only valid spelling letters
+                        state.currentInputValue = currentWord.word.toLowerCase().replace(/[^a-z]/g, '');
                         el.userInput.value = state.currentInputValue;
                         updateSlots();
                         
@@ -1971,5 +3140,6 @@
 
         init();
     </script>
+
 </body>
 </html>

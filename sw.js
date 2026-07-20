@@ -52,11 +52,28 @@ self.addEventListener('fetch', event => {
         })
     );
   } else {
-    // 其它静态资源（如 CSV、图标等）采用 Cache-First 策略
+    // 其它静态资源（如 CSV、图标等）采用 Cache-First 策略，并在获取后动态进行缓存
     event.respondWith(
       caches.match(event.request)
         .then(response => {
-          return response || fetch(event.request);
+          if (response) {
+            return response;
+          }
+          return fetch(event.request).then(networkResponse => {
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+            // 仅对 GET 请求的同源静态资源或 CSV 词库进行动态缓存优化
+            if (event.request.method === 'GET' && (url.origin === self.location.origin || url.pathname.endsWith('.csv'))) {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            }
+            return networkResponse;
+          }).catch(() => {
+            // 吞掉网络异常，避免崩溃
+          });
         })
     );
   }
