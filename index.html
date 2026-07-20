@@ -231,10 +231,10 @@
     <!-- Main Game UI -->
     <div id="gameContent" class="w-full max-w-md hidden html-down flex flex-col flex-1 justify-center h-full overflow-hidden">
         
-        <!-- 优化：增加 mt-2（上外边距），使 header 整体在视觉 and 结构上下移，避开系统触控死角 -->
-        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl sticky top-0 z-40 border border-white/30 dark:border-white/5 py-2 px-3 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-2 mb-1.5 flex items-center justify-between flex-shrink-0 gap-1.5">
-            <div class="flex items-center gap-1 flex-1 min-w-0">
-                <svg class="w-6 h-6 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+        <!-- 优化：增加 mt-4（上外边距），使 header 整体在视觉 and 结构上下移，避开系统触控死角，适配全面屏/刘海屏 -->
+        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl relative z-40 border border-white/30 dark:border-white/5 py-3 px-4 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-4 mb-2 flex items-center justify-between flex-shrink-0 gap-2">
+            <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                <svg class="w-7 h-7 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                     <path d="M40,90 C40,40 160,40 160,90 L170,110 C140,115 60,115 30,110 Z" fill="#a1887f"/>
                     <ellipse cx="100" cy="110" rx="75" ry="10" fill="#8d6e63"/>
                     <circle cx="100" cy="125" r="30" fill="#ffcc80"/>
@@ -253,22 +253,22 @@
                         <text x="150" y="55" fill="#fabc05" transform="rotate(15 150 55)">C</text>
                     </g>
                 </svg>
-                <h1 class="text-[10px] font-black tracking-tight text-left truncate text-gray-800 dark:text-gray-100">SpellQuest</h1>
+                <h1 class="text-xs font-black tracking-tight text-left truncate text-gray-800 dark:text-gray-100">SpellQuest</h1>
             </div>
             
-            <button id="openCoursePageBtn" class="flex items-center gap-1 px-2.5 py-1 bg-[#007aff]/10 hover:bg-[#007aff]/15 dark:bg-[#0a84ff]/15 dark:hover:bg-[#0a84ff]/20 active:scale-95 text-[10px] font-extrabold text-[#007aff] dark:text-[#0a84ff] rounded-full transition-all border border-[#007aff]/10 dark:border-[#0a84ff]/25 max-w-[150px] truncate h-[26px]">
+            <button id="openCoursePageBtn" class="flex items-center justify-center gap-1.5 px-3.5 bg-[#007aff]/10 hover:bg-[#007aff]/15 dark:bg-[#0a84ff]/15 dark:hover:bg-[#0a84ff]/20 active:scale-95 text-xs font-black text-[#007aff] dark:text-[#0a84ff] rounded-full transition-all border border-[#007aff]/10 dark:border-[#0a84ff]/25 max-w-[180px] truncate h-[38px] shadow-sm select-none">
                 <span>📚</span>
                 <span id="activeUnitName" class="truncate">选择课程</span>
-                <span class="text-[7px] opacity-60">❯</span>
+                <span class="text-[8px] opacity-65">❯</span>
             </button>
             
-            <div class="flex items-center gap-1.5 flex-shrink-0">
+            <div class="flex items-center gap-2 flex-shrink-0">
                 <div class="flex flex-col items-end pr-0.5 justify-center">
-                    <span id="navProgress" class="text-[10px] font-extrabold text-[#007aff] dark:text-[#0a84ff]">0%</span>
+                    <span id="navProgress" class="text-xs font-black text-[#007aff] dark:text-[#0a84ff]">0%</span>
                 </div>
-                <button id="themeToggleBtn" class="p-1.5 bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] rounded-lg active:scale-90 transition">
-                    <span class="dark:hidden text-xs">🌙</span>
-                    <span class="hidden dark:inline text-xs">☀️</span>
+                <button id="themeToggleBtn" class="p-2 bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] rounded-lg active:scale-90 transition h-[34px] w-[34px] flex items-center justify-center">
+                    <span class="dark:hidden text-sm">🌙</span>
+                    <span class="hidden dark:inline text-sm">☀️</span>
                 </button>
             </div>
         </header>
@@ -566,7 +566,7 @@
             <div class="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-2.5 mb-1.5 flex-shrink-0"></div>
             
             <!-- Close Button -->
-            <button id="closeCourseSelectionBtn" class="absolute top-3.5 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white bg-black/5 dark:bg-white/10 active:scale-90 w-7 h-7 flex items-center justify-center rounded-full transition-all text-xs font-bold z-50">✕</button>
+            <button id="closeCourseSelectionBtn" class="absolute top-3.5 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white bg-black/5 dark:bg-white/10 active:scale-90 w-9 h-9 flex items-center justify-center rounded-full transition-all text-sm font-bold z-50">✕</button>
 
             <!-- Header -->
             <div class="relative z-10 flex flex-col items-center px-4 pb-2">
