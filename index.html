@@ -30,7 +30,7 @@
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
         * {
@@ -95,10 +95,8 @@
             z-index: 1;
         }
 
-        /* 3D Elastic Card with Safari Flicker Fix */
+        /* 2D Elastic Card with Safari Backdrop-Filter Compatibility Fix */
         .card-perspective {
-            perspective: 2000px;
-            -webkit-perspective: 2000px;
             position: relative;
             flex-grow: 1; 
             display: flex;
@@ -112,16 +110,7 @@
             width: 100%;
             height: 100%;
             max-height: 380px; 
-            min-height: 300px;
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-            -webkit-transition: -webkit-transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-            transform-style: preserve-3d;
-            -webkit-transform-style: preserve-3d;
-            will-change: transform;
-        }
-        .card-inner.is-flipped {
-            transform: rotateY(180deg);
-            -webkit-transform: rotateY(180deg);
+            min-height: 250px;
         }
         
         .card-front, .card-back {
@@ -130,39 +119,40 @@
             left: 0;
             width: 100%;
             height: 100%;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             border-radius: 28px;
             box-sizing: border-box;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-            -webkit-transition: opacity 0.4s ease, visibility 0.4s ease;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.4s ease, visibility 0.4s ease;
+            -webkit-transition: -webkit-transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.4s ease, visibility 0.4s ease;
+            will-change: transform, opacity;
         }
         
         .card-front { 
-            transform: rotateY(0deg); 
+            transform: scaleX(1); 
             z-index: 2; 
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
         }
         .card-back { 
-            transform: rotateY(180deg); 
+            transform: scaleX(0); 
             z-index: 1; 
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
         }
 
-        /* iOS Safari Fix: Toggle opacity and pointer-events dynamically to prevent backdrop-filter bleeding and click-throughs */
+        /* iOS Safari Fix: Toggle opacity, visibility, transform, and pointer-events dynamically to prevent backdrop-filter bleeding and click-throughs */
         .card-inner.is-flipped .card-front {
+            transform: scaleX(0);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
         }
         .card-inner.is-flipped .card-back {
+            transform: scaleX(1);
             opacity: 1;
             visibility: visible;
             pointer-events: auto;
@@ -227,10 +217,10 @@
     </div>
 
     <!-- Main Game UI -->
-    <div id="gameContent" class="w-full max-w-md hidden html-down hidden flex flex-col flex-1 justify-center h-full overflow-hidden">
+    <div id="gameContent" class="w-full max-w-md hidden html-down flex flex-col flex-1 justify-center h-full overflow-hidden">
         
-        <!-- 优化：增加 mt-3（上外边距），使 header 整体在视觉和结构上下移，避开系统触控死角 -->
-        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl sticky top-0 z-40 border border-white/30 dark:border-white/5 py-2.5 px-3 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-3 mb-2 flex items-center justify-between flex-shrink-0">
+        <!-- 优化：增加 mt-2（上外边距），使 header 整体在视觉 and 结构上下移，避开系统触控死角 -->
+        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl sticky top-0 z-40 border border-white/30 dark:border-white/5 py-2 px-3 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-2 mb-1.5 flex items-center justify-between flex-shrink-0">
             <div class="flex items-center gap-1.5 flex-1 min-w-0">
                 <svg class="w-7 h-7 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                     <path d="M40,90 C40,40 160,40 160,90 L170,110 C140,115 60,115 30,110 Z" fill="#a1887f"/>
@@ -251,7 +241,7 @@
                         <text x="150" y="55" fill="#fabc05" transform="rotate(15 150 55)">C</text>
                     </g>
                 </svg>
-                <h1 class="text-xs font-bold tracking-tight text-left truncate">SpellQuest</h1>
+                <h1 class="text-xs font-bold tracking-tight text-left truncate">XiyiSpellQuet</h1>
             </div>
             
             <div id="unitSelectorTrigger" class="relative flex items-center justify-center bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] active:scale-95 transition-all duration-200 px-3 py-1.5 rounded-xl text-[10px] font-bold text-center cursor-pointer max-w-[160px] flex-1 mx-1.5 border border-black/[0.02] dark:border-white/[0.02] z-50">
@@ -271,43 +261,91 @@
             </div>
         </header>
         
-        <div class="w-full flex flex-col gap-1.5 mb-2 bg-white/30 dark:bg-black/15 backdrop-blur-2xl p-2 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-white/20 dark:border-white/5 flex-shrink-0">
+        <!-- Wizard Growth & Check-in Panel -->
+        <div id="wizardPanel" class="w-full bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-indigo-500/10 dark:from-violet-500/15 dark:via-fuchsia-500/15 dark:to-indigo-500/15 backdrop-blur-2xl p-2 rounded-xl shadow-sm border border-violet-500/20 dark:border-violet-500/30 flex flex-col gap-1 mb-1.5 flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-base">🧙‍♂️</span>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1">
+                            <span id="wizardLevelBadge" class="text-[9px] bg-violet-600 text-white font-extrabold px-1.5 py-0.5 rounded-md leading-none shadow-sm shadow-violet-600/20">Lv.1</span>
+                            <span id="wizardTitle" class="text-[10px] font-bold text-violet-700 dark:text-violet-300">见习魔法学徒</span>
+                        </div>
+                        <span id="wizardExpText" class="text-[8px] font-semibold text-gray-500 dark:text-gray-400 mt-0.5">0 / 100 EXP</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-1.5">
+                    <!-- Daily Streak -->
+                    <div class="flex items-center gap-0.5 bg-amber-500/10 dark:bg-amber-500/25 px-1.5 py-0.5 rounded-lg border border-amber-500/20">
+                        <span class="text-[10px]">🔥</span>
+                        <span id="wizardStreak" class="text-[9px] font-extrabold text-amber-600 dark:text-amber-400">0天</span>
+                    </div>
+                    
+                    <!-- Star Points -->
+                    <div class="flex items-center gap-0.5 bg-fuchsia-500/10 dark:bg-fuchsia-500/25 px-1.5 py-0.5 rounded-lg border border-fuchsia-500/20">
+                        <span class="text-[10px]">✨</span>
+                        <span id="wizardStars" class="text-[9px] font-extrabold text-fuchsia-600 dark:text-fuchsia-400">0</span>
+                    </div>
+
+                    <!-- Ebbinghaus Due Reminder -->
+                    <div id="ebbinghausDueReminder" class="flex items-center gap-0.5 bg-rose-500/10 dark:bg-rose-500/25 px-1.5 py-0.5 rounded-lg border border-rose-500/20 hover:scale-105 active:scale-95 cursor-pointer transition-all hidden">
+                        <span class="text-[10px]">⏳</span>
+                        <span id="ebbinghausDueCount" class="text-[9px] font-extrabold text-rose-600 dark:text-rose-400">待复习 0</span>
+                    </div>
+
+                    <!-- Daily Check-In Button -->
+                    <button id="wizardCheckInBtn" class="bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-[9px] px-2 py-1 rounded-lg shadow-md shadow-indigo-600/15 active:scale-95 transition-all duration-200">打卡</button>
+                </div>
+            </div>
+            
+            <!-- Exp Progress Bar -->
+            <div class="w-full bg-violet-600/5 dark:bg-white/5 rounded-full h-1.5 overflow-hidden border border-violet-500/5">
+                <div id="wizardExpBar" class="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 h-full w-0 transition-all duration-500 ease-out"></div>
+            </div>
+        </div>
+        
+        <div class="w-full flex flex-col gap-1 mb-1.5 bg-white/30 dark:bg-black/15 backdrop-blur-2xl p-1.5 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] border border-white/20 dark:border-white/5 flex-shrink-0">
             <div class="flex gap-1.5 items-center">
-                <div class="relative flex-1 bg-black/[0.04] dark:bg-white/[0.04] rounded-xl px-1.5 border border-black/[0.01] dark:border-white/[0.01]">
-                    <select id="groupSelector" class="w-full py-1.5 bg-transparent rounded-xl text-[11px] font-bold cursor-pointer text-center appearance-none text-iosText-light dark:text-iosText-dark">
+                <div class="relative flex-1 bg-black/[0.04] dark:bg-white/[0.04] rounded-lg px-1 border border-black/[0.01] dark:border-white/[0.01]">
+                    <select id="groupSelector" class="w-full py-1 bg-transparent rounded-lg text-[10px] font-bold cursor-pointer text-center appearance-none text-iosText-light dark:text-iosText-dark">
                         <option value="newConcept">🎒 少儿新概念</option>
                         <option value="schoolClass">🏫 学校课堂组</option>
                         <option value="ieltsClass">🗽 雅思词汇</option>
                     </select>
                 </div>
-                <button id="resetProgressBtn" class="text-[9px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#ff453a] px-2.5 py-1.5 bg-white/40 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] rounded-xl shadow-sm transition-all flex-shrink-0 active:scale-95">🔄 重置单元</button>
+                <button id="resetProgressBtn" class="text-[9px] font-bold text-gray-500 dark:text-gray-400 hover:text-[#ff453a] px-2 py-1 bg-white/40 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.05] rounded-lg shadow-sm transition-all flex-shrink-0 active:scale-95">🔄 重置单元</button>
             </div>
             
             <div class="grid grid-cols-2 gap-1.5 items-center">
-                <div class="bg-black/[0.03] dark:bg-white/[0.03] py-1 px-2 rounded-xl flex items-center justify-between border border-black/[0.01] dark:border-white/[0.01] h-[26px]">
+                <div class="bg-black/[0.03] dark:bg-white/[0.03] py-0.5 px-1.5 rounded-lg flex items-center justify-between border border-black/[0.01] dark:border-white/[0.01] h-[22px]">
                     <span class="text-[8px] font-semibold text-gray-500 dark:text-gray-400">口音</span>
-                    <div class="flex gap-2">
-                        <label class="flex items-center gap-1 text-[10px] font-semibold cursor-pointer">
-                            <input type="radio" name="accentType" value="2" checked class="w-3 h-3 accent-[#007aff]"> 美
+                    <div class="flex gap-1.5">
+                        <label class="flex items-center gap-0.5 text-[9px] font-semibold cursor-pointer">
+                            <input type="radio" name="accentType" value="2" checked class="w-2.5 h-2.5 accent-[#007aff]"> 美
                         </label>
-                        <label class="flex items-center gap-1 text-[10px] font-semibold cursor-pointer">
-                            <input type="radio" name="accentType" value="1" class="w-3 h-3 accent-[#007aff]"> 英
+                        <label class="flex items-center gap-0.5 text-[9px] font-semibold cursor-pointer">
+                            <input type="radio" name="accentType" value="1" class="w-2.5 h-2.5 accent-[#007aff]"> 英
                         </label>
                     </div>
                 </div>
 
-                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-xl h-[26px]">
-                    <div id="segment-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-white dark:bg-[#1c1c1e] rounded-[8px] shadow-md transition-transform duration-300 ease-out z-0"></div>
-                    <button id="mode-spell-btn" class="flex-1 rounded-[8px] font-bold text-[10px] transition-colors duration-200 text-iosText-light dark:text-iosText-dark relative z-10">拼读挑战</button>
-                    <button id="mode-card-btn" class="flex-1 rounded-[8px] font-medium text-[10px] transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">卡片背诵</button>
+                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-lg h-[22px]">
+                    <div id="segment-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] bg-white dark:bg-[#1c1c1e] rounded-[6px] shadow-md transition-transform duration-300 ease-out z-0"></div>
+                    <button id="mode-spell-btn" class="flex-1 rounded-[6px] font-bold text-[9px] transition-colors duration-200 text-iosText-light dark:text-iosText-dark relative z-10">拼读挑战</button>
+                    <button id="mode-card-btn" class="flex-1 rounded-[6px] font-medium text-[9px] transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">卡片背诵</button>
                 </div>
             </div>
         </div>
 
-        <div id="mainCard" class="card-perspective my-1">
+        <div id="mainCard" class="card-perspective my-0.5">
             <div id="cardInner" class="card-inner">
                 
-                <div class="card-front bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-4 rounded-[28px] ios-depth">
+                <div class="card-front bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-3 rounded-[28px] ios-depth absolute">
+                    <!-- Floating Controls -->
+                    <button id="exitReviewBtn" class="absolute top-3 left-3 z-30 bg-black/10 dark:bg-white/10 px-2.5 py-1 rounded-full text-[9px] font-bold text-gray-600 dark:text-gray-300 active:scale-90 transition-all duration-200 hidden">
+                        🔙 退出温习
+                    </button>
                     <div>
                         <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
                             <span id="progressTitle">冒险进度</span>
@@ -339,9 +377,13 @@
                         <div id="letterSlots" class="flex justify-center flex-wrap gap-1 text-lg font-bold tracking-wide h-[32px] w-full px-1 items-end overflow-hidden mb-1"></div>
                     </div>
 
-                    <div id="spellActionButtons" class="grid grid-cols-2 gap-2 mt-auto">
-                        <button id="speakBtn" class="bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] text-[#007aff] py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1 active:scale-[0.98] transition-all border border-black/[0.02] dark:border-white/[0.02]"><span>听发音 🔊</span></button>
-                        <button id="checkBtn" class="bg-[#007aff] hover:bg-[#0a84ff] text-white py-2.5 rounded-xl font-bold text-xs shadow-md shadow-[#007aff]/15 active:scale-[0.98] transition-all">检查结果</button>
+                    <div id="spellActionButtons" class="grid grid-cols-3 gap-1.5 mt-auto">
+                        <button id="speakBtn" class="bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] text-[#007aff] py-2.5 rounded-xl font-bold text-[10px] flex items-center justify-center gap-0.5 active:scale-[0.98] transition-all border border-black/[0.02] dark:border-white/[0.02]">🔊 听发音</button>
+                        <button id="pronounceBtn" class="bg-violet-600/10 dark:bg-violet-600/25 border border-violet-500/20 text-violet-600 dark:text-violet-300 py-2.5 rounded-xl font-bold text-[10px] flex items-center justify-center gap-0.5 active:scale-[0.98] transition-all relative overflow-hidden">
+                            <span id="pronounceIcon">🎤</span> <span id="pronounceText">纠错发音</span>
+                            <div id="pronounceWave" class="absolute inset-0 bg-violet-600/20 scale-y-0 origin-bottom transition-transform duration-300"></div>
+                        </button>
+                        <button id="checkBtn" class="bg-[#007aff] hover:bg-[#0a84ff] text-white py-2.5 rounded-xl font-bold text-[10px] shadow-md shadow-[#007aff]/15 active:scale-[0.98] transition-all">检查拼写</button>
                     </div>
 
                     <div id="cardFrontActionButtons" class="hidden mt-auto">
@@ -352,7 +394,8 @@
                     </div>
                 </div>
 
-                <div class="card-back bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-4 rounded-[28px] ios-depth">
+                <div class="card-back bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-3 rounded-[28px] ios-depth absolute">
+                    <!-- Floating Controls Back -->
                     <div>
                         <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
                             <span>卡片解读</span>
@@ -388,7 +431,12 @@
             </div>
         </div>
         
-        <button id="reviewWrongBtn" class="w-full bg-[#ff453a]/90 hover:bg-[#ff453a] text-white py-2 rounded-xl font-bold text-xs hidden shadow-md shadow-[#ff453a]/10 active:scale-95 transition-all mb-1 flex-shrink-0">温习错题库 (0)</button>
+        <!-- Reinforcement Training Hub -->
+        <div id="trainingHub" class="w-full mb-1 flex-shrink-0">
+            <button id="reviewWrongBtn" class="w-full bg-gradient-to-r from-red-500/10 to-orange-500/10 dark:from-red-500/15 dark:to-orange-500/15 border border-red-500/20 text-[#ff453a] dark:text-[#ff6961] py-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-sm">
+                🔥 错词攻坚 <span id="wrongCount" class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none ml-1">0</span>
+            </button>
+        </div>
 
         <div id="localDropZone" class="hidden p-2.5 mb-1 border border-dashed border-black/20 dark:border-white/20 bg-white/40 dark:bg-white/[0.02] rounded-xl text-[9px] font-semibold text-gray-500 cursor-pointer w-full text-center hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition flex-shrink-0">
             请点击此处手动导入本地词库 CSV 文件
@@ -397,10 +445,10 @@
 
         <input type="text" id="userInput" class="ghost-input" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" inputmode="text">
         
-        <div id="virtualKeyboard" class="w-full bg-[#d1d1d6]/50 dark:bg-[#1a1a20]/60 backdrop-blur-3xl p-1 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col gap-1 flex-shrink-0">
-            <div class="flex justify-center gap-1" id="kbd-row1"></div>
-            <div class="flex justify-center gap-1" id="kbd-row2"></div>
-            <div class="flex justify-center gap-1" id="kbd-row3"></div>
+        <div id="virtualKeyboard" class="w-full bg-[#d1d1d6]/50 dark:bg-[#1a1a20]/60 backdrop-blur-3xl p-1.5 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex flex-col gap-1 flex-shrink-0">
+            <div class="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-1" id="kbd-row1"></div>
+            <div class="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-1" id="kbd-row2"></div>
+            <div class="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-1" id="kbd-row3"></div>
         </div>
     </div>
 
@@ -467,12 +515,22 @@
             side: 'front',
             wordBank: [],
             wrongWords: [],
+            vocabWords: [],
             masteredWords: new Set(),
             currentIndex: 0,
             isReviewMode: false,
+            isVocabMode: false,
             imgRetryCount: 0,
             touch: { x: 0, y: 0 },
-            isTrans: false 
+            isTrans: false,
+            wizard: {
+                level: 1,
+                exp: 0,
+                streak: 0,
+                stars: 0,
+                lastCheckIn: ""
+            },
+            ebbinghausHistory: {}
         };
 
         const el = {
@@ -498,6 +556,9 @@
             progressText: document.getElementById('progressText'),
             navProgress: document.getElementById('navProgress'),
             reviewBtn: document.getElementById('reviewWrongBtn'),
+            reviewVocabBtn: document.getElementById('reviewVocabBtn'),
+            wrongCount: document.getElementById('wrongCount'),
+            vocabCount: document.getElementById('vocabCount'),
             audio: document.getElementById('globalAudioPlayer'),
             globalThemeBtn: document.getElementById('globalThemeBtn'),
             themeToggleBtn: document.getElementById('themeToggleBtn'),
@@ -505,6 +566,7 @@
             modeCardBtn: document.getElementById('mode-card-btn'),
             resetProgressBtn: document.getElementById('resetProgressBtn'),
             speakBtn: document.getElementById('speakBtn'),
+            pronounceBtn: document.getElementById('pronounceBtn'),
             checkBtn: document.getElementById('checkBtn'),
             showAnswerBtn: document.getElementById('showAnswerBtn'),
             cardWord: document.getElementById('cardWord'),
@@ -517,7 +579,19 @@
             virtualKeyboard: document.getElementById('virtualKeyboard'),
             passwordError: document.getElementById('passwordError'),
             mainCard: document.getElementById('mainCard'),
-            iosToast: document.getElementById('iosToast')
+            iosToast: document.getElementById('iosToast'),
+            
+            // Growth & Collection selectors
+            wizardLevelBadge: document.getElementById('wizardLevelBadge'),
+            wizardTitle: document.getElementById('wizardTitle'),
+            wizardExpText: document.getElementById('wizardExpText'),
+            wizardStreak: document.getElementById('wizardStreak'),
+            wizardStars: document.getElementById('wizardStars'),
+            wizardCheckInBtn: document.getElementById('wizardCheckInBtn'),
+            wizardExpBar: document.getElementById('wizardExpBar'),
+            vocabToggleBtnFront: document.getElementById('vocabToggleBtnFront'),
+            vocabToggleBtnBack: document.getElementById('vocabToggleBtnBack'),
+            exitReviewBtn: document.getElementById('exitReviewBtn')
         };
 
         let audioCtx = null;
@@ -592,6 +666,27 @@
             el.checkBtn.addEventListener('click', check);
             el.showAnswerBtn.addEventListener('click', flipToBack);
             el.reviewBtn.addEventListener('click', reviewWrongWords);
+            if (el.reviewVocabBtn) {
+                el.reviewVocabBtn.addEventListener('click', reviewVocabWords);
+            }
+            el.exitReviewBtn.addEventListener('click', exitReviewMode);
+            
+            if (el.vocabToggleBtnFront) {
+                el.vocabToggleBtnFront.addEventListener('click', e => { e.stopPropagation(); toggleVocab(); });
+            }
+            if (el.vocabToggleBtnBack) {
+                el.vocabToggleBtnBack.addEventListener('click', e => { e.stopPropagation(); toggleVocab(); });
+            }
+            el.pronounceBtn.addEventListener('click', handlePronunciationCheck);
+            el.wizardCheckInBtn.addEventListener('click', performDailyCheckIn);
+            
+            const ebbinghausBtn = document.getElementById('ebbinghausDueReminder');
+            if (ebbinghausBtn) {
+                ebbinghausBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    reviewWrongWords();
+                });
+            }
             
             el.userInput.addEventListener('input', e => filterInput(e.target));
 
@@ -669,9 +764,37 @@
             if (wrongs) {
                 try { 
                     state.wrongWords = JSON.parse(wrongs); 
-                    updateWrongWordsButton(); 
                 } catch(e){}
             }
+
+            // Load Wizard State
+            const wizardSaved = localStorage.getItem('spellquest_wizard');
+            if (wizardSaved) {
+                try {
+                    state.wizard = { ...state.wizard, ...JSON.parse(wizardSaved) };
+                } catch(e){}
+            }
+            
+            // Load Vocabulary Book
+            const vocabSaved = localStorage.getItem('spell_saved_vocab_book');
+            if (vocabSaved) {
+                try {
+                    state.vocabWords = JSON.parse(vocabSaved);
+                } catch(e){}
+            }
+
+            // Load Ebbinghaus History
+            state.ebbinghausHistory = {};
+            const ebbinghausSaved = localStorage.getItem('spell_ebbinghaus_history');
+            if (ebbinghausSaved) {
+                try {
+                    state.ebbinghausHistory = JSON.parse(ebbinghausSaved);
+                } catch(e){}
+            }
+
+            updateWizardUI();
+            updateReinforcementCounts();
+            calculateAndInjectEbbinghausReviews();
         }
 
         function toggleDarkMode() {
@@ -711,28 +834,47 @@
         }
 
         function showCurrentWord() {
-            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
-            document.getElementById('progressTitle').textContent = state.isReviewMode ? "错题消灭进度" : "冒险进度";
+            let bank = state.wordBank;
+            if (state.isReviewMode) {
+                bank = state.wrongWords;
+                document.getElementById('progressTitle').textContent = "错词攻坚进度";
+            } else if (state.isVocabMode) {
+                bank = state.vocabWords;
+                document.getElementById('progressTitle').textContent = "生词强化进度";
+            } else {
+                document.getElementById('progressTitle').textContent = "冒险进度";
+            }
 
             if (bank.length === 0) {
                 if (state.isReviewMode) {
                     state.isReviewMode = false;
-                    showToast("🎉 错题全部消灭完毕！");
-                    updateWrongWordsButton();
+                    showToast("🎉 错词攻坚完成！继续前进吧！");
+                } else if (state.isVocabMode) {
+                    state.isVocabMode = false;
+                    showToast("🎉 生词本消灭干净！你太棒了！");
                 } else {
                     showLoadError("该组词库没有单词哦");
                     return;
                 }
+                bank = state.wordBank;
+                state.currentIndex = 0;
+                document.getElementById('progressTitle').textContent = "冒险进度";
             }
 
             if (state.currentIndex >= bank.length) {
                 triggerEpicFireworks();
-                showToast(state.isReviewMode ? "🎉 错题消灭干净！" : "🎉 已完成本单元！");
-                state.currentIndex = 0;
                 if (state.isReviewMode) {
+                    showToast("🎉 错词全部消灭干净！");
                     state.isReviewMode = false;
-                    localStorage.removeItem('spell_saved_wrong_words');
+                } else if (state.isVocabMode) {
+                    showToast("🎉 生词全部强化完毕！");
+                    state.isVocabMode = false;
+                } else {
+                    showToast("🎉 已完成本单元！");
                 }
+                state.currentIndex = 0;
+                bank = state.wordBank;
+                document.getElementById('progressTitle').textContent = "冒险进度";
             }
 
             const wordObj = bank[state.currentIndex];
@@ -752,8 +894,9 @@
             fetchNetworkImage(cleanWord);
             fetchPhonetic(cleanWord);
             updateProgress();
+            updateReinforcementCounts();
 
-            if (!state.isReviewMode && state.mode === 'spell') {
+            if (!state.isReviewMode && !state.isVocabMode && state.mode === 'spell') {
                 localStorage.setItem('spell_saved_index', state.currentIndex);
             }
             
@@ -806,7 +949,7 @@
 
         function check() {
             if (state.mode !== 'spell' || state.isTrans) return;
-            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
             
             if (!bank || state.currentIndex >= bank.length || !bank[state.currentIndex]) {
                 return;
@@ -819,11 +962,34 @@
                 playSound('success');
                 el.cardInner.classList.add('celebrate');
 
+                // Reward wizard
+                let expGained = 10;
+                let starsGained = 1;
+                
+                if (state.isReviewMode) {
+                    expGained = 20; // Extra reward for wrong word tackling
+                    starsGained = 2;
+                } else if (state.isVocabMode) {
+                    expGained = 15; // Extra reward for vocab training
+                    starsGained = 2;
+                }
+                
+                // Add exp and stars
+                setTimeout(() => {
+                    addExp(expGained);
+                    state.wizard.stars += starsGained;
+                    saveWizardState();
+                    updateWizardUI();
+                }, 100);
+
+                // Update Ebbinghaus state on success
+                updateEbbinghausState(bank[state.currentIndex], true);
+
                 // iOS Safari Audio Preload: preload the next word's pronunciation inside user gesture handler!
                 try {
                     let nextIdx = state.currentIndex;
                     let tempBank = [...bank];
-                    if (state.isReviewMode) {
+                    if (state.isReviewMode || state.isVocabMode) {
                         tempBank.splice(state.currentIndex, 1);
                     } else {
                         nextIdx = state.currentIndex + 1;
@@ -844,7 +1010,11 @@
                     if (state.isReviewMode) {
                         state.wrongWords.splice(state.currentIndex, 1);
                         localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
-                        updateWrongWordsButton();
+                        updateReinforcementCounts();
+                    } else if (state.isVocabMode) {
+                        state.vocabWords.splice(state.currentIndex, 1);
+                        localStorage.setItem('spell_saved_vocab_book', JSON.stringify(state.vocabWords));
+                        updateReinforcementCounts();
                     } else {
                         state.currentIndex++;
                     }
@@ -855,14 +1025,16 @@
                 state.isTrans = true;
                 playSound('error');
                 el.cardInner.classList.add('shake');
-                if (!state.isReviewMode) {
+                if (!state.isReviewMode && !state.isVocabMode) {
                     const exists = state.wrongWords.some(w => w.word === bank[state.currentIndex].word);
                     if (!exists) {
                         state.wrongWords.push(bank[state.currentIndex]);
                         localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
-                        updateWrongWordsButton();
+                        updateReinforcementCounts();
                     }
                 }
+                // Update Ebbinghaus state on failure
+                updateEbbinghausState(bank[state.currentIndex], false);
                 setTimeout(() => {
                     el.cardInner.classList.remove('shake');
                     state.currentInputValue = "";
@@ -912,8 +1084,7 @@
         }
 
         function speakWord() {
-            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
-            const word = bank[state.currentIndex]?.word;
+            const word = getCurrentWordObject()?.word;
             if (!word) return;
             getAudioContext(); 
             const accent = document.querySelector('input[name="accentType"]:checked').value;
@@ -931,27 +1102,74 @@
             CONFIG.KBD_ROWS.forEach((row, i) => {
                 const rowEl = document.getElementById(`kbd-row${i+1}`);
                 rowEl.innerHTML = "";
-                row.forEach(key => {
-                    const btn = document.createElement('button');
-                    btn.textContent = key;
-                    btn.className = key === "⌫" 
-                        ? "flex-1 bg-[#8e8e93] dark:bg-zinc-600 text-white font-bold text-base py-3 rounded-xl shadow-md border border-white/10"
-                        : "flex-1 bg-white/80 dark:bg-[#2c2c2e]/80 text-iosText-light dark:text-iosText-dark font-semibold text-base py-3 rounded-xl shadow-md border border-white/20 dark:border-white/[0.03]";
-                    
-                    const keyHandler = (e) => {
-                        e.preventDefault();
-                        getAudioContext(); 
-                        handleKeyInput(key === "⌫" ? "BACKSPACE" : key);
-                    };
-
-                    btn.addEventListener('touchend', keyHandler);
-                    btn.addEventListener('mousedown', (e) => {
-                        if ('ontouchstart' in window) return; 
-                        keyHandler(e);
+                
+                if (i === 0) { // Row 1
+                    row.forEach(key => {
+                        const btn = document.createElement('button');
+                        btn.textContent = key;
+                        btn.className = "col-span-2 bg-white/80 dark:bg-[#2c2c2e]/80 text-iosText-light dark:text-iosText-dark font-semibold text-base py-2 md:py-2.5 rounded-xl shadow-md border border-white/20 dark:border-white/[0.03] transition-all";
+                        
+                        const keyHandler = (e) => {
+                            e.preventDefault();
+                            getAudioContext(); 
+                            handleKeyInput(key);
+                        };
+                        btn.addEventListener('touchend', keyHandler);
+                        btn.addEventListener('mousedown', (e) => {
+                            if ('ontouchstart' in window) return; 
+                            keyHandler(e);
+                        });
+                        rowEl.appendChild(btn);
                     });
-                    
-                    rowEl.appendChild(btn);
-                });
+                } else if (i === 1) { // Row 2
+                    row.forEach((key, idx) => {
+                        const btn = document.createElement('button');
+                        btn.textContent = key;
+                        // First key gets col-start-2 to achieve half-key margin on both sides
+                        const startClass = idx === 0 ? "col-start-2 " : "";
+                        btn.className = startClass + "col-span-2 bg-white/80 dark:bg-[#2c2c2e]/80 text-iosText-light dark:text-iosText-dark font-semibold text-base py-2 md:py-2.5 rounded-xl shadow-md border border-white/20 dark:border-white/[0.03] transition-all";
+                        
+                        const keyHandler = (e) => {
+                            e.preventDefault();
+                            getAudioContext(); 
+                            handleKeyInput(key);
+                        };
+                        btn.addEventListener('touchend', keyHandler);
+                        btn.addEventListener('mousedown', (e) => {
+                            if ('ontouchstart' in window) return; 
+                            keyHandler(e);
+                        });
+                        rowEl.appendChild(btn);
+                    });
+                } else if (i === 2) { // Row 3
+                    // Left spacer spanning 3 columns (1.5 standard keys)
+                    const spacerLeft = document.createElement('div');
+                    spacerLeft.className = "col-span-3";
+                    rowEl.appendChild(spacerLeft);
+
+                    row.forEach(key => {
+                        const btn = document.createElement('button');
+                        btn.textContent = key;
+                        if (key === "⌫") {
+                            // Backspace spans 3 columns (1.5 standard keys)
+                            btn.className = "col-span-3 bg-[#8e8e93] dark:bg-zinc-600 text-white font-bold text-base py-2 md:py-2.5 rounded-xl shadow-md border border-white/10 transition-all";
+                        } else {
+                            btn.className = "col-span-2 bg-white/80 dark:bg-[#2c2c2e]/80 text-iosText-light dark:text-iosText-dark font-semibold text-base py-2 md:py-2.5 rounded-xl shadow-md border border-white/20 dark:border-white/[0.03] transition-all";
+                        }
+                        
+                        const keyHandler = (e) => {
+                            e.preventDefault();
+                            getAudioContext(); 
+                            handleKeyInput(key === "⌫" ? "BACKSPACE" : key);
+                        };
+                        btn.addEventListener('touchend', keyHandler);
+                        btn.addEventListener('mousedown', (e) => {
+                            if ('ontouchstart' in window) return; 
+                            keyHandler(e);
+                        });
+                        rowEl.appendChild(btn);
+                    });
+                }
             });
         }
 
@@ -968,7 +1186,7 @@
 
         function handleAnkiFeedback(level) {
             if (state.isTrans) return;
-            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
             if (bank.length === 0) return;
 
             state.isTrans = true;
@@ -996,20 +1214,44 @@
                 }
             } catch (err) {}
 
+            const currentItem = bank[state.currentIndex];
             if (level === 'again') {
                 const item = bank.splice(state.currentIndex, 1)[0];
                 bank.push(item);
                 playSound('error');
                 el.cardInner.classList.add('shake');
                 setTimeout(() => el.cardInner.classList.remove('shake'), 450);
+                
+                updateEbbinghausState(currentItem, false);
             } else if (level === 'good') {
                 state.currentIndex++;
+                addExp(5);
+                
+                updateEbbinghausState(currentItem, true);
             } else if (level === 'easy') {
                 state.masteredWords.add(bank[state.currentIndex].word);
-                bank.splice(state.currentIndex, 1);
+                
+                // If in vocab mode, make sure to save the updated vocab book!
+                if (state.isVocabMode) {
+                    bank.splice(state.currentIndex, 1);
+                    localStorage.setItem('spell_saved_vocab_book', JSON.stringify(state.vocabWords));
+                } else if (state.isReviewMode) {
+                    bank.splice(state.currentIndex, 1);
+                    localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                } else {
+                    bank.splice(state.currentIndex, 1);
+                }
+
                 playSound('success');
                 el.cardInner.classList.add('celebrate');
                 setTimeout(() => el.cardInner.classList.remove('celebrate'), 400);
+
+                addExp(15);
+                state.wizard.stars += 1;
+                saveWizardState();
+                updateWizardUI();
+                
+                updateEbbinghausState(currentItem, true, true);
             }
 
             state.side = 'front';
@@ -1018,8 +1260,17 @@
                 setTimeout(() => {
                     if (bank.length === 0) {
                         triggerEpicFireworks();
-                        showToast("🎉 全部掌握！");
-                        resetAllProgress();
+                        if (state.isReviewMode) {
+                            showToast("🎉 错词消灭干净！");
+                            state.isReviewMode = false;
+                        } else if (state.isVocabMode) {
+                            showToast("🎉 生词本消灭干净！");
+                            state.isVocabMode = false;
+                        } else {
+                            showToast("🎉 全部掌握！");
+                            resetAllProgress();
+                        }
+                        showCurrentWord();
                     } else {
                         if (state.currentIndex >= bank.length) state.currentIndex = 0;
                         showCurrentWord();
@@ -1053,7 +1304,7 @@
         }
 
         function updateProgress() {
-            const bank = state.isReviewMode ? state.wrongWords : state.wordBank;
+            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
             const total = bank.length + state.masteredWords.size;
             let percent = 0;
 
@@ -1169,17 +1420,380 @@
             speakWord(); 
         }
         
-        function updateWrongWordsButton() {
-            const count = state.wrongWords.length;
-            el.reviewBtn.textContent = `温习错题库 (${count})`;
-            el.reviewBtn.classList.toggle('hidden', count === 0);
+        function updateReinforcementCounts() {
+            const wrongCount = state.wrongWords.length;
+            const vocabCount = state.vocabWords.length;
+            
+            if (el.wrongCount) el.wrongCount.textContent = wrongCount;
+            if (el.vocabCount) el.vocabCount.textContent = vocabCount;
+            
+            const isInReinforcement = state.isReviewMode || state.isVocabMode;
+            if (el.exitReviewBtn) {
+                el.exitReviewBtn.classList.toggle('hidden', !isInReinforcement);
+            }
+            
+            // Sync Star toggle color for current word
+            const currentWord = getCurrentWordObject();
+            const isStarred = currentWord && state.vocabWords.some(w => w.word.toLowerCase() === currentWord.word.toLowerCase());
+            
+            if (el.vocabToggleBtnFront) {
+                el.vocabToggleBtnFront.classList.toggle('text-amber-500', !!isStarred);
+                el.vocabToggleBtnFront.classList.toggle('text-gray-400', !isStarred);
+                el.vocabToggleBtnFront.classList.toggle('dark:text-gray-500', !isStarred);
+            }
+            if (el.vocabToggleBtnBack) {
+                el.vocabToggleBtnBack.classList.toggle('text-amber-500', !!isStarred);
+                el.vocabToggleBtnBack.classList.toggle('text-gray-400', !isStarred);
+                el.vocabToggleBtnBack.classList.toggle('dark:text-gray-500', !isStarred);
+            }
         }
 
         function reviewWrongWords() {
-            if (state.wrongWords.length === 0) return;
+            if (state.wrongWords.length === 0) {
+                showToast("🔥 错词库空空如也，真棒！");
+                return;
+            }
             state.isReviewMode = true;
+            state.isVocabMode = false;
             state.currentIndex = 0;
             showCurrentWord();
+        }
+
+        function reviewVocabWords() {
+            if (state.vocabWords.length === 0) {
+                showToast("📖 智能生词本空空如也，快去收藏吧！");
+                return;
+            }
+            state.isVocabMode = true;
+            state.isReviewMode = false;
+            state.currentIndex = 0;
+            showCurrentWord();
+        }
+
+        function exitReviewMode() {
+            state.isReviewMode = false;
+            state.isVocabMode = false;
+            state.currentIndex = parseInt(localStorage.getItem('spell_saved_index') || 0);
+            showToast("🚪 已返回正常冒险");
+            showCurrentWord();
+        }
+
+        function getCurrentWordObject() {
+            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
+            return bank ? bank[state.currentIndex] : null;
+        }
+
+        function toggleVocab() {
+            const currentWord = getCurrentWordObject();
+            if (!currentWord || !currentWord.word) return;
+            
+            const index = state.vocabWords.findIndex(w => w.word.toLowerCase() === currentWord.word.toLowerCase());
+            if (index > -1) {
+                state.vocabWords.splice(index, 1);
+                showToast("⚪ 已移出生词本");
+            } else {
+                state.vocabWords.push(currentWord);
+                showToast("⭐ 已加入智能生词本 (+10 EXP)");
+                addExp(10);
+            }
+            localStorage.setItem('spell_saved_vocab_book', JSON.stringify(state.vocabWords));
+            updateReinforcementCounts();
+        }
+
+        // ==========================================
+        //         WIZARD GROWTH SYSTEM
+        // ==========================================
+        function getLevelThreshold(level) {
+            // Significant increase in difficulty (exponential scaling)
+            return Math.floor(250 * Math.pow(1.5, level - 1) + 150 * level);
+        }
+
+        function getWizardTitle(level) {
+            if (level <= 2) return "🔮 见习魔法学徒";
+            if (level <= 4) return "🧪 药水配方师";
+            if (level <= 6) return "⚡ 元素法术使";
+            if (level <= 9) return "🌀 秘奥魔导士";
+            return "👑 大魔导师";
+        }
+
+        function getTodayDateString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function getYesterdayDateString() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yyyy = yesterday.getFullYear();
+            const mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+            const dd = String(yesterday.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function saveWizardState() {
+            localStorage.setItem('spellquest_wizard', JSON.stringify(state.wizard));
+        }
+
+        function updateWizardUI() {
+            if (el.wizardLevelBadge) el.wizardLevelBadge.textContent = `Lv.${state.wizard.level}`;
+            if (el.wizardTitle) el.wizardTitle.textContent = getWizardTitle(state.wizard.level);
+            if (el.wizardStreak) el.wizardStreak.textContent = `${state.wizard.streak}天`;
+            if (el.wizardStars) el.wizardStars.textContent = state.wizard.stars;
+            
+            const threshold = getLevelThreshold(state.wizard.level);
+            if (el.wizardExpText) el.wizardExpText.textContent = `${state.wizard.exp} / ${threshold} EXP`;
+            
+            const progress = Math.min(100, (state.wizard.exp / threshold) * 100);
+            if (el.wizardExpBar) el.wizardExpBar.style.width = `${progress}%`;
+            
+            if (el.wizardCheckInBtn) {
+                const todayStr = getTodayDateString();
+                if (state.wizard.lastCheckIn === todayStr) {
+                    el.wizardCheckInBtn.textContent = "已打卡";
+                    el.wizardCheckInBtn.classList.add('opacity-60', 'pointer-events-none');
+                } else {
+                    el.wizardCheckInBtn.textContent = "打卡";
+                    el.wizardCheckInBtn.classList.remove('opacity-60', 'pointer-events-none');
+                }
+            }
+        }
+
+        function addExp(amount) {
+            state.wizard.exp += amount;
+            showToast(`✨ EXP +${amount}`);
+            checkLevelUp();
+            saveWizardState();
+            updateWizardUI();
+        }
+
+        function checkLevelUp() {
+            let currentLvl = state.wizard.level;
+            let threshold = getLevelThreshold(currentLvl);
+            let leveledUp = false;
+            
+            while (state.wizard.exp >= threshold) {
+                state.wizard.exp -= threshold;
+                state.wizard.level++;
+                currentLvl = state.wizard.level;
+                threshold = getLevelThreshold(currentLvl);
+                leveledUp = true;
+            }
+            
+            if (leveledUp) {
+                setTimeout(() => {
+                    triggerLevelUpCelebration();
+                }, 300);
+            }
+        }
+
+        function triggerLevelUpCelebration() {
+            triggerEpicFireworks();
+            playSound('success');
+            
+            // Custom synthetic upgrade fan-fare sounds!
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // Beautiful rising C-Major arpeggio!
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                    g.gain.setValueAtTime(0.08, now + idx * 0.12);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.3);
+                    osc.start(now + idx * 0.12);
+                    osc.stop(now + idx * 0.12 + 0.3);
+                });
+            } catch(e){}
+            
+            const newTitle = getWizardTitle(state.wizard.level);
+            showToast(`🎉 恭喜晋升为 [${newTitle}]！`);
+        }
+
+        function performDailyCheckIn() {
+            getAudioContext();
+            const todayStr = getTodayDateString();
+            if (state.wizard.lastCheckIn === todayStr) {
+                showToast("📅 今天已经打过卡啦，明天再来哦！");
+                return;
+            }
+            
+            const yesterdayStr = getYesterdayDateString();
+            if (state.wizard.lastCheckIn === yesterdayStr) {
+                state.wizard.streak++;
+            } else if (state.wizard.lastCheckIn !== todayStr) {
+                state.wizard.streak = 1;
+            }
+            
+            state.wizard.lastCheckIn = todayStr;
+            state.wizard.stars += 10;
+            saveWizardState();
+            updateWizardUI();
+            
+            addExp(50);
+            playSound('success');
+            triggerEpicFireworks();
+            showToast(`📅 打卡成功！EXP +50, ✨ +10！`);
+        }
+
+        // ==========================================
+        //         PRONUNCIATION CHANGER
+        // ==========================================
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recognition = null;
+        let isRecognizing = false;
+
+        function startVoiceRecordingFallback() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const userAudio = new Audio(audioUrl);
+                        
+                        showToast("👂 正在回放你的发音...");
+                        userAudio.play();
+                        
+                        userAudio.onended = () => {
+                            setTimeout(() => {
+                                showToast("🔊 正在播放标准发音，对比一下吧！");
+                                speakWord();
+                            }, 500);
+                        };
+                        
+                        addExp(5);
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    updatePronounceButtonState(true, "正在录音...");
+                    
+                    setTimeout(() => {
+                        if (isRecording) {
+                            stopVoiceRecording();
+                        }
+                    }, 3000);
+                })
+                .catch(err => {
+                    showToast("⚠️ 无法获取麦克风权限，无法纠错发音");
+                    updatePronounceButtonState(false, "纠错发音");
+                });
+        }
+
+        function stopVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                updatePronounceButtonState(false, "纠错发音");
+            }
+        }
+
+        function handlePronunciationCheck() {
+            getAudioContext();
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                if (isRecording) {
+                    stopVoiceRecording();
+                } else {
+                    startVoiceRecordingFallback();
+                }
+                return;
+            }
+            
+            if (isRecognizing) {
+                recognition.stop();
+                return;
+            }
+            
+            try {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                
+                recognition.onstart = () => {
+                    isRecognizing = true;
+                    updatePronounceButtonState(true, "倾听中...");
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event);
+                    showToast("⚠️ 识别出错，请重试");
+                    isRecognizing = false;
+                    updatePronounceButtonState(false, "纠错发音");
+                };
+                
+                recognition.onend = () => {
+                    isRecognizing = false;
+                    updatePronounceButtonState(false, "纠错发音");
+                };
+                
+                recognition.onresult = (event) => {
+                    const currentWord = getCurrentWordObject();
+                    if (!currentWord) return;
+                    
+                    const targetStr = currentWord.word.trim().toLowerCase().replace(/[^a-z]/g, '');
+                    const spokenStr = event.results[0][0].transcript.trim().toLowerCase().replace(/[^a-z]/g, '');
+                    
+                    if (spokenStr === targetStr) {
+                        playSound('success');
+                        triggerEpicFireworks();
+                        addExp(15);
+                        state.wizard.stars += 2;
+                        saveWizardState();
+                        updateWizardUI();
+                        
+                        // Auto-fill
+                        state.currentInputValue = currentWord.word.toLowerCase();
+                        el.userInput.value = state.currentInputValue;
+                        updateSlots();
+                        
+                        showToast(`🎯 完美发音！听到的是: "${event.results[0][0].transcript}" (+15 EXP, +2 ✨)`);
+                    } else {
+                        playSound('fail');
+                        showToast(`😢 听到的是: "${event.results[0][0].transcript}"，可以再清晰点哦！`);
+                        setTimeout(() => {
+                            speakWord();
+                        }, 1200);
+                    }
+                };
+                
+                recognition.start();
+            } catch (e) {
+                console.error(e);
+                startVoiceRecordingFallback();
+            }
+        }
+
+        function updatePronounceButtonState(active, text) {
+            const textEl = document.getElementById('pronounceText');
+            const iconEl = document.getElementById('pronounceIcon');
+            const waveEl = document.getElementById('pronounceWave');
+            
+            if (active) {
+                if (textEl) textEl.textContent = text;
+                if (iconEl) iconEl.textContent = "🔴";
+                if (waveEl) waveEl.style.transform = "scaleY(1)";
+            } else {
+                if (textEl) textEl.textContent = "纠错发音";
+                if (iconEl) iconEl.textContent = "🎤";
+                if (waveEl) waveEl.style.transform = "scaleY(0)";
+            }
         }
 
         function resetAllProgress() {
@@ -1254,6 +1868,103 @@
                 const reader = new FileReader();
                 reader.onload = e => parseRawText(e.target.result);
                 reader.readAsText(input.files[0]);
+            }
+        }
+
+        // ==========================================
+        //       EBBINGHAUS SPACED REPETITION
+        // ==========================================
+        function updateEbbinghausState(wordObj, isCorrect, isEasy = false) {
+            if (!wordObj || !wordObj.word) return;
+            const wordKey = wordObj.word.trim().toLowerCase();
+            
+            let record = state.ebbinghausHistory[wordKey];
+            if (!record) {
+                record = {
+                    word: wordObj.word,
+                    desc: wordObj.desc || "",
+                    emoji: wordObj.emoji || "📝",
+                    step: 0,
+                    lastReview: 0,
+                    nextReview: 0
+                };
+            }
+            
+            // Ebbinghaus review intervals (in hours):
+            // Step 0: 30 minutes (0.5h)
+            // Step 1: 12 hours
+            // Step 2: 24 hours (1 day)
+            // Step 3: 48 hours (2 days)
+            // Step 4: 96 hours (4 days)
+            // Step 5: 168 hours (7 days)
+            // Step 6: 360 hours (15 days)
+            // Step 7: 720 hours (30 days)
+            const intervals = [0.5, 12, 24, 48, 96, 168, 360, 720];
+            
+            if (isCorrect) {
+                if (isEasy) {
+                    record.step = Math.min(intervals.length - 1, record.step + 2);
+                } else {
+                    record.step = Math.min(intervals.length - 1, record.step + 1);
+                }
+                const hrs = intervals[record.step];
+                record.lastReview = Date.now();
+                record.nextReview = Date.now() + hrs * 60 * 60 * 1000;
+            } else {
+                record.step = 0;
+                record.lastReview = Date.now();
+                record.nextReview = Date.now() + 10 * 60 * 1000; // 10 minutes
+            }
+            
+            state.ebbinghausHistory[wordKey] = record;
+            localStorage.setItem('spell_ebbinghaus_history', JSON.stringify(state.ebbinghausHistory));
+            
+            calculateAndInjectEbbinghausReviews();
+        }
+
+        function calculateAndInjectEbbinghausReviews() {
+            const now = Date.now();
+            let dueCount = 0;
+            const dueList = [];
+            
+            for (const key in state.ebbinghausHistory) {
+                const record = state.ebbinghausHistory[key];
+                if (record.nextReview && record.nextReview <= now) {
+                    dueCount++;
+                    dueList.push(record);
+                }
+            }
+            
+            let wrongWordsChanged = false;
+            const pendingDue = dueList.filter(dueItem => {
+                return !state.wrongWords.some(w => w.word.trim().toLowerCase() === dueItem.word.trim().toLowerCase());
+            });
+            
+            if (pendingDue.length > 0) {
+                state.wrongWords = [...pendingDue.map(item => ({
+                    word: item.word,
+                    desc: item.desc,
+                    emoji: item.emoji,
+                    isEbbinghausPrioritized: true
+                })), ...state.wrongWords];
+                wrongWordsChanged = true;
+            }
+            
+            if (wrongWordsChanged) {
+                localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                updateReinforcementCounts();
+            }
+            
+            const dueBadge = document.getElementById('ebbinghausDueReminder');
+            const dueCountText = document.getElementById('ebbinghausDueCount');
+            
+            if (dueBadge && dueCountText) {
+                dueCountText.textContent = `待复习 ${dueCount}`;
+                if (dueCount > 0) {
+                    dueBadge.classList.remove('hidden');
+                } else {
+                    dueBadge.classList.add('hidden');
+                }
             }
         }
 
