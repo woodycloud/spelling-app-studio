@@ -1375,7 +1375,7 @@
         }
 
         function handleKeyInput(key) {
-            if (state.mode !== 'spell') return;
+            if (state.mode !== 'spell' || state.isTrans) return;
             if (key === "BACKSPACE") {
                 state.currentInputValue = state.currentInputValue.slice(0, -1);
             } else if (state.currentInputValue.length < state.maxLetters) {
@@ -3117,6 +3117,9 @@
                     emoji: item.emoji,
                     isEbbinghausPrioritized: true
                 })), ...state.wrongWords];
+                if (state.isReviewMode) {
+                    state.currentIndex += pendingDue.length;
+                }
                 wrongWordsChanged = true;
             }
             
