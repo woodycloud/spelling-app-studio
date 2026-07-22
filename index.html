@@ -1128,6 +1128,8 @@
 
         function updateSlots() {
             const slots = el.letterSlots.children;
+            const isLong = slots.length > 12;
+            const sizeClass = isLong ? "text-xs" : "text-lg";
             let inputIdx = 0;
             for (let i = 0; i < slots.length; i++) {
                 if (slots[i].dataset.special === "true") continue;
@@ -1137,11 +1139,11 @@
                     const char = state.currentInputValue[inputIdx];
                     if (slots[i].textContent === "•") slots[i].classList.add("letter-pop");
                     slots[i].textContent = char;
-                    slots[i].className = "text-[#007aff] dark:text-[#34a8ff] font-extrabold border-b-[2px] border-[#007aff] dark:border-[#34a8ff] px-0.5 leading-none transition-all lowercase letter-pop";
+                    slots[i].className = `text-[#007aff] dark:text-[#34a8ff] font-extrabold border-b-[2px] border-[#007aff] dark:border-[#34a8ff] ${sizeClass} px-0.5 leading-none transition-all lowercase letter-pop`;
                 } else {
                     slots[i].textContent = "•";
                     slots[i].classList.remove("letter-pop");
-                    slots[i].className = "text-[#8e8e93] dark:text-zinc-500 font-black px-0.5 transition-all leading-none opacity-80";
+                    slots[i].className = `text-[#8e8e93] dark:text-zinc-500 font-black ${sizeClass} px-0.5 transition-all leading-none opacity-80`;
                 }
                 inputIdx++;
             }
@@ -1591,12 +1593,14 @@
 
         function onGroupChange() {
             state.isReviewMode = false;
+            state.isVocabMode = false;
             localStorage.setItem('spell_saved_group', el.groupSelector.value);
             updateUnitOptions();
         }
 
         function onUnitChange() {
             state.isReviewMode = false;
+            state.isVocabMode = false;
             const currentUnit = el.unitSelector.value;
             localStorage.setItem('spell_saved_unit', currentUnit);
             
