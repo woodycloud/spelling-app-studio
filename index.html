@@ -274,29 +274,35 @@
         </header>
         
         <!-- Mini Wizard Entry Bar (Replaces the large wizardPanel to avoid cluttering) -->
-        <div id="wizardEntryBtn" class="w-full bg-gradient-to-r from-violet-500/10 via-fuchsia-500/10 to-indigo-500/10 dark:from-violet-500/15 dark:via-fuchsia-500/15 dark:to-indigo-500/15 backdrop-blur-2xl px-3 py-1.5 rounded-xl shadow-sm border border-violet-500/20 dark:border-violet-500/30 flex items-center justify-between mb-1.5 flex-shrink-0 cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all select-none">
-            <div class="flex items-center gap-1.5">
-                <span class="text-base">🧙‍♂️</span>
-                <div class="flex items-center gap-1">
-                    <span id="miniWizardLevel" class="text-[8px] bg-violet-600 text-white font-extrabold px-1 rounded leading-none py-0.5">Lv.1</span>
-                    <span id="miniWizardTitle" class="text-[9px] font-bold text-violet-700 dark:text-violet-300">见习魔法学徒</span>
+        <div id="wizardEntryBtn" class="w-full bg-white/50 dark:bg-black/30 backdrop-blur-2xl px-3 py-2 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-white/40 dark:border-white/10 flex items-center justify-between mb-2 flex-shrink-0 cursor-pointer hover:bg-white/60 dark:hover:bg-black/40 active:scale-[0.98] transition-all select-none gap-2">
+            <!-- Left side: Wizard avatar + Level badge + Title -->
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-lg leading-none flex-shrink-0">🧙‍♂️</span>
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span id="miniWizardLevel" class="text-[9px] bg-violet-600 dark:bg-violet-500 text-white font-black px-1.5 py-0.5 rounded-md leading-none shadow-xs flex-shrink-0">Lv.1</span>
+                    <span id="miniWizardTitle" class="text-xs font-black text-gray-800 dark:text-gray-100 truncate">见习魔法学徒</span>
                 </div>
             </div>
             
-            <div class="flex items-center gap-1.5">
+            <!-- Right side: Ebbinghaus Reminder + Streak/Badges + Enter Hall Button -->
+            <div class="flex items-center gap-2 flex-shrink-0">
                 <!-- Ebbinghaus Due Reminder (moved here) -->
-                <div id="ebbinghausDueReminder" class="flex items-center gap-0.5 bg-rose-500/10 dark:bg-rose-500/25 px-1.5 py-0.5 rounded-lg border border-rose-500/20 hover:scale-105 active:scale-95 cursor-pointer transition-all hidden">
-                    <span class="text-[10px]">⏳</span>
-                    <span id="ebbinghausDueCount" class="text-[9px] font-extrabold text-rose-600 dark:text-rose-400">待复习 0</span>
+                <div id="ebbinghausDueReminder" class="flex items-center gap-1 bg-rose-500/15 dark:bg-rose-500/25 px-2 py-0.5 rounded-full border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 cursor-pointer transition-all hidden">
+                    <span class="text-[10px] leading-none animate-pulse">⏳</span>
+                    <span id="ebbinghausDueCount" class="text-[10px] font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">待复习 0</span>
                 </div>
 
                 <!-- Streak & Medals Compact Badge -->
-                <div class="flex items-center gap-1 text-[9px] font-semibold text-gray-500 dark:text-gray-400">
-                    <span class="text-amber-600 dark:text-amber-400">🔥 <span id="miniWizardStreak">0天</span></span>
-                    <span class="text-fuchsia-600 dark:text-fuchsia-400">🏆 <span id="miniWizardBadgesCount">0勋章</span></span>
+                <div class="flex items-center gap-1.5 text-[10px] font-extrabold text-gray-600 dark:text-gray-300">
+                    <span class="text-amber-500 dark:text-amber-400 flex items-center gap-0.5">🔥 <span id="miniWizardStreak">0天</span></span>
+                    <span class="text-fuchsia-500 dark:text-fuchsia-400 flex items-center gap-0.5">🏆 <span id="miniWizardBadgesCount">0勋章</span></span>
                 </div>
                 
-                <span class="text-[8px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 dark:bg-violet-500/20 px-1.5 py-0.5 rounded-md">进入圣殿 ➜</span>
+                <!-- Enter Hall Button -->
+                <div class="flex items-center gap-0.5 text-[10px] font-black text-violet-600 dark:text-violet-400 bg-violet-500/10 dark:bg-violet-500/20 hover:bg-violet-500/15 px-2.5 py-1 rounded-full border border-violet-500/20 transition-all flex-shrink-0">
+                    <span>进入圣殿</span>
+                    <span class="text-[8px] opacity-70">❯</span>
+                </div>
             </div>
         </div>
         
