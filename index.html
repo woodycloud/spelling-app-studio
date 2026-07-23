@@ -1043,9 +1043,11 @@
 
             if (bank.length === 0) {
                 if (state.isReviewMode) {
+                    triggerEpicFireworks();
                     state.isReviewMode = false;
                     showToast("🎉 错词攻坚完成！继续前进吧！");
                 } else if (state.isVocabMode) {
+                    triggerEpicFireworks();
                     state.isVocabMode = false;
                     showToast("🎉 生词本消灭干净！你太棒了！");
                 } else {
@@ -1058,19 +1060,13 @@
             }
 
             if (state.currentIndex >= bank.length) {
-                triggerEpicFireworks();
-                if (state.isReviewMode) {
-                    showToast("🎉 错词全部消灭干净！");
-                    state.isReviewMode = false;
-                } else if (state.isVocabMode) {
-                    showToast("🎉 生词全部强化完毕！");
-                    state.isVocabMode = false;
+                if (state.isReviewMode || state.isVocabMode) {
+                    state.currentIndex = 0;
                 } else {
+                    triggerEpicFireworks();
                     showToast("🎉 已完成本单元！");
+                    state.currentIndex = 0;
                 }
-                state.currentIndex = 0;
-                bank = state.wordBank;
-                document.getElementById('progressTitle').textContent = "冒险进度";
             }
 
             const wordObj = bank[state.currentIndex];
@@ -1986,6 +1982,12 @@
             if (index > -1) {
                 state.vocabWords.splice(index, 1);
                 showToast("⚪ 已移出生词本");
+                if (state.isVocabMode) {
+                    if (state.currentIndex >= state.vocabWords.length) {
+                        state.currentIndex = Math.max(0, state.vocabWords.length - 1);
+                    }
+                    showCurrentWord();
+                }
             } else {
                 state.vocabWords.push(currentWord);
                 showToast("⭐ 已加入智能生词本 (+10 EXP)");
