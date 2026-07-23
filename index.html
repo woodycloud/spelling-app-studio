@@ -1057,6 +1057,10 @@
                 bank = state.wordBank;
                 state.currentIndex = 0;
                 document.getElementById('progressTitle').textContent = "冒险进度";
+                if (bank.length === 0) {
+                    showLoadError("该组词库没有单词哦");
+                    return;
+                }
             }
 
             if (state.currentIndex >= bank.length) {
