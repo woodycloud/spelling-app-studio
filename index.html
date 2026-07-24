@@ -542,8 +542,19 @@
                 </div>
             </div>
             
-            <!-- Helpful tip footer -->
-            <p class="text-[8px] text-gray-500 italic mt-auto select-none">温馨提示：点击任意勋章图标，可查看点亮要求与当前进度哦！</p>
+            <!-- Helpful tip & Backup/Restore footer -->
+            <div class="mt-auto pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between gap-1 text-[8px] select-none">
+                <p class="text-gray-500 italic truncate">点击任意勋章图标查看点亮要求</p>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <button id="exportBackupBtn" class="bg-violet-500/10 dark:bg-violet-500/20 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 font-bold px-2 py-0.5 rounded-md transition-all active:scale-95 flex items-center gap-0.5">
+                        <span>📤</span> 备份
+                    </button>
+                    <button id="importBackupBtn" class="bg-violet-500/10 dark:bg-violet-500/20 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 font-bold px-2 py-0.5 rounded-md transition-all active:scale-95 flex items-center gap-0.5">
+                        <span>📥</span> 还原
+                    </button>
+                    <input type="file" id="backupFileInput" accept=".json" class="hidden">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -856,6 +867,31 @@
                     }
                 });
             }
+
+            // Backup & Restore event listeners
+            const exportBtn = document.getElementById('exportBackupBtn');
+            const importBtn = document.getElementById('importBackupBtn');
+            const backupFileInp = document.getElementById('backupFileInput');
+
+            if (exportBtn) exportBtn.addEventListener('click', exportUserData);
+            if (importBtn && backupFileInp) {
+                importBtn.addEventListener('click', () => backupFileInp.click());
+                backupFileInp.addEventListener('change', e => {
+                    if (e.target.files?.[0]) {
+                        importUserData(e.target.files[0]);
+                        e.target.value = '';
+                    }
+                });
+            }
+
+            // Global Escape key modal dismiss
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('#wizardSanctuaryModal, #courseSelectionModal').forEach(m => {
+                        m.classList.add('hidden');
+                    });
+                }
+            });
             
             const ebbinghausBtn = document.getElementById('ebbinghausDueReminder');
             if (ebbinghausBtn) {
@@ -2980,6 +3016,72 @@
                 if (iconEl) iconEl.textContent = "🎤";
                 if (waveEl) waveEl.style.transform = "scaleY(0)";
             }
+        }
+
+        function exportUserData() {
+            try {
+                const backupData = {
+                    version: "2.0",
+                    exportDate: new Date().toISOString(),
+                    wizard: state.wizard,
+                    ebbinghausHistory: state.ebbinghausHistory,
+                    vocabWords: state.vocabWords,
+                    wrongWords: state.wrongWords,
+                    savedIndex: localStorage.getItem('spell_saved_index'),
+                    savedGroup: localStorage.getItem('spell_saved_group'),
+                    savedUnit: localStorage.getItem('spell_saved_unit')
+                };
+                const jsonStr = JSON.stringify(backupData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `SpellQuest_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("📤 学习数据备份导出成功！");
+            } catch (err) {
+                showToast("❌ 导出失败");
+            }
+        }
+
+        function importUserData(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data && (data.wizard || data.ebbinghausHistory || data.vocabWords)) {
+                        if (data.wizard) {
+                            state.wizard = { ...state.wizard, ...data.wizard };
+                            saveWizardState();
+                        }
+                        if (data.ebbinghausHistory) {
+                            state.ebbinghausHistory = data.ebbinghausHistory;
+                            localStorage.setItem('spell_ebbinghaus_history', JSON.stringify(state.ebbinghausHistory));
+                        }
+                        if (data.vocabWords && Array.isArray(data.vocabWords)) {
+                            state.vocabWords = data.vocabWords;
+                            localStorage.setItem('spell_saved_vocab_book', JSON.stringify(state.vocabWords));
+                        }
+                        if (data.wrongWords && Array.isArray(data.wrongWords)) {
+                            state.wrongWords = data.wrongWords;
+                            localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                        }
+                        updateWizardUI();
+                        updateReinforcementCounts();
+                        calculateAndInjectEbbinghausReviews();
+                        showToast("🎉 数据还原成功！");
+                    } else {
+                        showToast("⚠️ 备份文件格式不正确");
+                    }
+                } catch (err) {
+                    showToast("❌ 无法解析备份文件");
+                }
+            };
+            reader.readAsText(file);
         }
 
         function resetAllProgress() {
