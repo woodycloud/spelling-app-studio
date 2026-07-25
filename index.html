@@ -232,9 +232,9 @@
     <div id="gameContent" class="w-full max-w-md hidden html-down flex flex-col flex-1 justify-center h-full overflow-hidden">
         
         <!-- 优化：增加 mt-4（上外边距），使 header 整体在视觉 and 结构上下移，避开系统触控死角，适配全面屏/刘海屏 -->
-        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl relative z-40 border border-white/30 dark:border-white/5 py-3 px-4 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-4 mb-2 flex items-center justify-between flex-shrink-0 gap-2">
-            <div class="flex items-center gap-1.5 flex-1 min-w-0">
-                <svg class="w-7 h-7 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+        <header class="w-full bg-white/30 dark:bg-black/20 backdrop-blur-2xl relative z-40 border border-white/30 dark:border-white/5 py-2 px-2.5 sm:px-4 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.01)] mt-4 mb-2 flex items-center justify-between flex-shrink-0 gap-1.5 sm:gap-2">
+            <div class="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-7 sm:h-7 drop-shadow-md flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                     <path d="M40,90 C40,40 160,40 160,90 L170,110 C140,115 60,115 30,110 Z" fill="#a1887f"/>
                     <ellipse cx="100" cy="110" rx="75" ry="10" fill="#8d6e63"/>
                     <circle cx="100" cy="125" r="30" fill="#ffcc80"/>
@@ -253,20 +253,20 @@
                         <text x="150" y="55" fill="#fabc05" transform="rotate(15 150 55)">C</text>
                     </g>
                 </svg>
-                <h1 class="text-xs font-black tracking-tight text-left truncate text-gray-800 dark:text-gray-100">SpellQuest</h1>
+                <h1 class="text-xs font-black tracking-tight text-left text-gray-800 dark:text-gray-100 whitespace-nowrap">SpellQuest</h1>
             </div>
             
-            <button id="openCoursePageBtn" class="flex items-center justify-center gap-1.5 px-3.5 bg-[#007aff]/10 hover:bg-[#007aff]/15 dark:bg-[#0a84ff]/15 dark:hover:bg-[#0a84ff]/20 active:scale-95 text-xs font-black text-[#007aff] dark:text-[#0a84ff] rounded-full transition-all border border-[#007aff]/10 dark:border-[#0a84ff]/25 max-w-[180px] truncate h-[38px] shadow-sm select-none">
+            <button id="openCoursePageBtn" class="flex items-center justify-center gap-1 px-2.5 sm:px-3.5 bg-[#007aff]/10 hover:bg-[#007aff]/15 dark:bg-[#0a84ff]/15 dark:hover:bg-[#0a84ff]/20 active:scale-95 text-[11px] sm:text-xs font-black text-[#007aff] dark:text-[#0a84ff] rounded-full transition-all border border-[#007aff]/10 dark:border-[#0a84ff]/25 flex-1 min-w-0 max-w-[130px] xs:max-w-[160px] sm:max-w-[190px] h-[34px] sm:h-[38px] shadow-sm select-none">
                 <span>📚</span>
                 <span id="activeUnitName" class="truncate">选择课程</span>
-                <span class="text-[8px] opacity-65">❯</span>
+                <span class="text-[8px] opacity-65 flex-shrink-0">❯</span>
             </button>
             
-            <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <div class="flex flex-col items-end pr-0.5 justify-center">
                     <span id="navProgress" class="text-xs font-black text-[#007aff] dark:text-[#0a84ff]">0%</span>
                 </div>
-                <button id="themeToggleBtn" class="p-2 bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] rounded-lg active:scale-90 transition h-[34px] w-[34px] flex items-center justify-center">
+                <button id="themeToggleBtn" class="p-1.5 sm:p-2 bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] rounded-lg active:scale-90 transition h-[32px] w-[32px] sm:h-[34px] sm:w-[34px] flex items-center justify-center">
                     <span class="dark:hidden text-sm">🌙</span>
                     <span class="hidden dark:inline text-sm">☀️</span>
                 </button>
@@ -274,32 +274,32 @@
         </header>
         
         <!-- Mini Wizard Entry Bar (Replaces the large wizardPanel to avoid cluttering) -->
-        <div id="wizardEntryBtn" class="w-full bg-white/50 dark:bg-black/30 backdrop-blur-2xl px-3 py-2 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-white/40 dark:border-white/10 flex items-center justify-between mb-2 flex-shrink-0 cursor-pointer hover:bg-white/60 dark:hover:bg-black/40 active:scale-[0.98] transition-all select-none gap-2">
+        <div id="wizardEntryBtn" class="w-full bg-white/50 dark:bg-black/30 backdrop-blur-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-white/40 dark:border-white/10 flex items-center justify-between mb-2 flex-shrink-0 cursor-pointer hover:bg-white/60 dark:hover:bg-black/40 active:scale-[0.98] transition-all select-none gap-1 sm:gap-2">
             <!-- Left side: Wizard avatar + Level badge + Title -->
-            <div class="flex items-center gap-2 min-w-0">
-                <span class="text-lg leading-none flex-shrink-0">🧙‍♂️</span>
-                <div class="flex items-center gap-1.5 min-w-0">
-                    <span id="miniWizardLevel" class="text-[9px] bg-violet-600 dark:bg-violet-500 text-white font-black px-1.5 py-0.5 rounded-md leading-none shadow-xs flex-shrink-0">Lv.1</span>
-                    <span id="miniWizardTitle" class="text-xs font-black text-gray-800 dark:text-gray-100 truncate">见习魔法学徒</span>
+            <div class="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-shrink-0">
+                <span class="text-base sm:text-lg leading-none flex-shrink-0">🧙‍♂️</span>
+                <div class="flex items-center gap-1 min-w-0">
+                    <span id="miniWizardLevel" class="text-[9px] bg-violet-600 dark:bg-violet-500 text-white font-black px-1 py-0.5 rounded-md leading-none shadow-xs flex-shrink-0">Lv.1</span>
+                    <span id="miniWizardTitle" class="text-[10px] sm:text-xs font-black text-gray-800 dark:text-gray-100 truncate max-w-[55px] xs:max-w-[85px] sm:max-w-none">见习魔法学徒</span>
                 </div>
             </div>
             
             <!-- Right side: Ebbinghaus Reminder + Streak/Badges + Enter Hall Button -->
-            <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 justify-end">
                 <!-- Ebbinghaus Due Reminder (moved here) -->
-                <div id="ebbinghausDueReminder" class="flex items-center gap-1 bg-rose-500/15 dark:bg-rose-500/25 px-2 py-0.5 rounded-full border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 cursor-pointer transition-all hidden">
-                    <span class="text-[10px] leading-none animate-pulse">⏳</span>
-                    <span id="ebbinghausDueCount" class="text-[10px] font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">待复习 0</span>
+                <div id="ebbinghausDueReminder" class="flex items-center gap-1 bg-rose-500/15 dark:bg-rose-500/25 px-1.5 py-0.5 rounded-full border border-rose-500/30 hover:bg-rose-500/20 active:scale-95 cursor-pointer transition-all hidden flex-shrink-0">
+                    <span class="text-[9px] sm:text-[10px] leading-none animate-pulse">⏳</span>
+                    <span id="ebbinghausDueCount" class="text-[9px] sm:text-[10px] font-black text-rose-600 dark:text-rose-400 whitespace-nowrap">待复习 0</span>
                 </div>
 
                 <!-- Streak & Medals Compact Badge -->
-                <div class="flex items-center gap-1.5 text-[10px] font-extrabold text-gray-600 dark:text-gray-300">
-                    <span class="text-amber-500 dark:text-amber-400 flex items-center gap-0.5">🔥 <span id="miniWizardStreak">0天</span></span>
-                    <span class="text-fuchsia-500 dark:text-fuchsia-400 flex items-center gap-0.5">🏆 <span id="miniWizardBadgesCount">0勋章</span></span>
+                <div class="flex items-center gap-1 text-[9px] sm:text-[10px] font-extrabold text-gray-600 dark:text-gray-300 flex-shrink-0">
+                    <span class="text-amber-500 dark:text-amber-400 flex items-center gap-0.5">🔥<span id="miniWizardStreak">0天</span></span>
+                    <span class="text-fuchsia-500 dark:text-fuchsia-400 flex items-center gap-0.5">🏆<span id="miniWizardBadgesCount">0勋章</span></span>
                 </div>
                 
                 <!-- Enter Hall Button -->
-                <div class="flex items-center gap-0.5 text-[10px] font-black text-violet-600 dark:text-violet-400 bg-violet-500/10 dark:bg-violet-500/20 hover:bg-violet-500/15 px-2.5 py-1 rounded-full border border-violet-500/20 transition-all flex-shrink-0">
+                <div class="flex items-center gap-0.5 text-[9px] sm:text-[10px] font-black text-violet-600 dark:text-violet-400 bg-violet-500/10 dark:bg-violet-500/20 hover:bg-violet-500/15 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-violet-500/20 transition-all flex-shrink-0 whitespace-nowrap">
                     <span>进入圣殿</span>
                     <span class="text-[8px] opacity-70">❯</span>
                 </div>
@@ -334,6 +334,7 @@
                                     🔙 退出
                                 </button>
                                 <span id="progressTitle">冒险进度</span>
+                                <span id="ebbinghausStageBadge" class="hidden text-[8px] px-1.5 py-0.5 rounded-md font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">🧠 Step 1/8</span>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <span id="progressText" class="text-[#007aff] font-bold">0%</span>
@@ -691,6 +692,7 @@
             currentIndex: 0,
             isReviewMode: false,
             isVocabMode: false,
+            isEbbinghausMode: false,
             imgRetryCount: 0,
             touch: { x: 0, y: 0 },
             isTrans: false,
@@ -897,7 +899,7 @@
             if (ebbinghausBtn) {
                 ebbinghausBtn.addEventListener('click', e => {
                     e.stopPropagation();
-                    reviewWrongWords();
+                    reviewEbbinghausWords();
                 });
             }
             
@@ -1066,19 +1068,24 @@
         }
 
         function showCurrentWord() {
-            let bank = state.wordBank;
-            if (state.isReviewMode) {
-                bank = state.wrongWords;
+            let bank = getCurrentWordBank();
+
+            if (state.isEbbinghausMode) {
+                document.getElementById('progressTitle').textContent = "艾宾浩斯复习进度";
+            } else if (state.isReviewMode) {
                 document.getElementById('progressTitle').textContent = "错词攻坚进度";
             } else if (state.isVocabMode) {
-                bank = state.vocabWords;
                 document.getElementById('progressTitle').textContent = "生词强化进度";
             } else {
                 document.getElementById('progressTitle').textContent = "冒险进度";
             }
 
             if (bank.length === 0) {
-                if (state.isReviewMode) {
+                if (state.isEbbinghausMode) {
+                    triggerEpicFireworks();
+                    state.isEbbinghausMode = false;
+                    showToast("🎉 艾宾浩斯遗忘曲线复习完毕！");
+                } else if (state.isReviewMode) {
                     triggerEpicFireworks();
                     state.isReviewMode = false;
                     showToast("🎉 错词攻坚完成！继续前进吧！");
@@ -1100,7 +1107,7 @@
             }
 
             if (state.currentIndex >= bank.length) {
-                if (state.isReviewMode || state.isVocabMode) {
+                if (state.isEbbinghausMode || state.isReviewMode || state.isVocabMode) {
                     state.currentIndex = 0;
                 } else {
                     triggerEpicFireworks();
@@ -1128,7 +1135,7 @@
             updateProgress();
             updateReinforcementCounts();
 
-            if (!state.isReviewMode && !state.isVocabMode && state.mode === 'spell') {
+            if (!state.isEbbinghausMode && !state.isReviewMode && !state.isVocabMode && state.mode === 'spell') {
                 localStorage.setItem('spell_saved_index', state.currentIndex);
                 const currentUnit = el.unitSelector ? el.unitSelector.value : '';
                 if (currentUnit) {
@@ -1151,6 +1158,19 @@
                 el.desc.textContent = wordObj.desc || "";
                 el.descContainer.classList.remove('hidden');
                 el.hintBtn.classList.add('hidden');
+            }
+
+            const stageBadge = document.getElementById('ebbinghausStageBadge');
+            if (stageBadge && wordObj && wordObj.word) {
+                const wordKey = wordObj.word.trim().toLowerCase();
+                const record = state.ebbinghausHistory[wordKey];
+                if (record) {
+                    const stepNum = (record.step || 0) + 1;
+                    stageBadge.textContent = `🧠 Step ${stepNum}/8`;
+                    stageBadge.classList.remove('hidden');
+                } else {
+                    stageBadge.classList.add('hidden');
+                }
             }
         }
 
@@ -1951,14 +1971,43 @@
             speakWord(); 
         }
         
+        function getCurrentWordBank() {
+            if (state.isEbbinghausMode) {
+                return getEbbinghausDueWords();
+            } else if (state.isReviewMode) {
+                return state.wrongWords;
+            } else if (state.isVocabMode) {
+                return state.vocabWords;
+            }
+            return state.wordBank;
+        }
+
+        function getCurrentWordObject() {
+            const bank = getCurrentWordBank();
+            return bank ? bank[state.currentIndex] : null;
+        }
+
         function updateReinforcementCounts() {
             const wrongCount = state.wrongWords.length;
             const vocabCount = state.vocabWords.length;
+            const dueWords = getEbbinghausDueWords();
+            const ebbinghausDueCount = dueWords.length;
             
             if (el.wrongCount) el.wrongCount.textContent = wrongCount;
             if (el.vocabCount) el.vocabCount.textContent = vocabCount;
             
-            const isInReinforcement = state.isReviewMode || state.isVocabMode;
+            const dueBadge = document.getElementById('ebbinghausDueReminder');
+            const dueCountText = document.getElementById('ebbinghausDueCount');
+            if (dueBadge && dueCountText) {
+                dueCountText.textContent = `待复习 ${ebbinghausDueCount}`;
+                if (ebbinghausDueCount > 0) {
+                    dueBadge.classList.remove('hidden');
+                } else {
+                    dueBadge.classList.add('hidden');
+                }
+            }
+            
+            const isInReinforcement = state.isReviewMode || state.isVocabMode || state.isEbbinghausMode;
             if (el.exitReviewBtn) {
                 el.exitReviewBtn.classList.toggle('hidden', !isInReinforcement);
             }
@@ -1979,6 +2028,20 @@
             }
         }
 
+        function reviewEbbinghausWords() {
+            const dueWords = getEbbinghausDueWords();
+            if (dueWords.length === 0) {
+                showToast("🧠 暂时没有到期的艾宾浩斯复习单词，太优秀了！");
+                return;
+            }
+            state.isEbbinghausMode = true;
+            state.isReviewMode = false;
+            state.isVocabMode = false;
+            state.currentIndex = 0;
+            showToast("🧠 进入艾宾浩斯强化复习");
+            showCurrentWord();
+        }
+
         function reviewWrongWords() {
             if (state.wrongWords.length === 0) {
                 showToast("🔥 错词库空空如也，真棒！");
@@ -1986,6 +2049,7 @@
             }
             state.isReviewMode = true;
             state.isVocabMode = false;
+            state.isEbbinghausMode = false;
             state.currentIndex = 0;
             showCurrentWord();
         }
@@ -1997,6 +2061,7 @@
             }
             state.isVocabMode = true;
             state.isReviewMode = false;
+            state.isEbbinghausMode = false;
             state.currentIndex = 0;
             showCurrentWord();
         }
@@ -2004,14 +2069,10 @@
         function exitReviewMode() {
             state.isReviewMode = false;
             state.isVocabMode = false;
+            state.isEbbinghausMode = false;
             state.currentIndex = parseInt(localStorage.getItem('spell_saved_index') || 0);
             showToast("🚪 已返回正常冒险");
             showCurrentWord();
-        }
-
-        function getCurrentWordObject() {
-            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
-            return bank ? bank[state.currentIndex] : null;
         }
 
         function toggleVocab() {
@@ -3162,6 +3223,19 @@
         // ==========================================
         //       EBBINGHAUS SPACED REPETITION
         // ==========================================
+        function getEbbinghausDueWords() {
+            const now = Date.now();
+            const dueList = [];
+            for (const key in state.ebbinghausHistory) {
+                const record = state.ebbinghausHistory[key];
+                if (record && record.nextReview && typeof record.nextReview === 'number' && record.nextReview <= now) {
+                    dueList.push(record);
+                }
+            }
+            dueList.sort((a, b) => a.nextReview - b.nextReview);
+            return dueList;
+        }
+
         function updateEbbinghausState(wordObj, isCorrect, isEasy = false) {
             if (!wordObj || !wordObj.word) return;
             const wordKey = wordObj.word.trim().toLowerCase();
@@ -3202,61 +3276,27 @@
                 record.step = 0;
                 record.lastReview = Date.now();
                 record.nextReview = Date.now() + 10 * 60 * 1000; // 10 minutes
+                
+                // Automatically add to wrong words if not already present
+                const alreadyInWrong = state.wrongWords.some(w => w.word.trim().toLowerCase() === wordKey);
+                if (!alreadyInWrong) {
+                    state.wrongWords.push({
+                        word: wordObj.word,
+                        desc: wordObj.desc || "",
+                        emoji: wordObj.emoji || "📝"
+                    });
+                    localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                }
             }
             
             state.ebbinghausHistory[wordKey] = record;
             localStorage.setItem('spell_ebbinghaus_history', JSON.stringify(state.ebbinghausHistory));
             
-            calculateAndInjectEbbinghausReviews();
+            updateReinforcementCounts();
         }
 
         function calculateAndInjectEbbinghausReviews() {
-            const now = Date.now();
-            let dueCount = 0;
-            const dueList = [];
-            
-            for (const key in state.ebbinghausHistory) {
-                const record = state.ebbinghausHistory[key];
-                if (record.nextReview && record.nextReview <= now) {
-                    dueCount++;
-                    dueList.push(record);
-                }
-            }
-            
-            let wrongWordsChanged = false;
-            const pendingDue = dueList.filter(dueItem => {
-                return !state.wrongWords.some(w => w.word.trim().toLowerCase() === dueItem.word.trim().toLowerCase());
-            });
-            
-            if (pendingDue.length > 0) {
-                state.wrongWords = [...pendingDue.map(item => ({
-                    word: item.word,
-                    desc: item.desc,
-                    emoji: item.emoji,
-                    isEbbinghausPrioritized: true
-                })), ...state.wrongWords];
-                if (state.isReviewMode) {
-                    state.currentIndex += pendingDue.length;
-                }
-                wrongWordsChanged = true;
-            }
-            
-            if (wrongWordsChanged) {
-                localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
-                updateReinforcementCounts();
-            }
-            
-            const dueBadge = document.getElementById('ebbinghausDueReminder');
-            const dueCountText = document.getElementById('ebbinghausDueCount');
-            
-            if (dueBadge && dueCountText) {
-                dueCountText.textContent = `待复习 ${dueCount}`;
-                if (dueCount > 0) {
-                    dueBadge.classList.remove('hidden');
-                } else {
-                    dueBadge.classList.add('hidden');
-                }
-            }
+            updateReinforcementCounts();
         }
 
         init();
