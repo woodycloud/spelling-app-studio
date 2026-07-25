@@ -15,6 +15,11 @@
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/180/000000/wizard.png">
     <link rel="manifest" href="manifest.json">
     
+    <link rel="preconnect" href="https://dict.youdao.com" crossorigin>
+    <link rel="preconnect" href="https://api.datamuse.com" crossorigin>
+    <link rel="preconnect" href="https://api.dictionaryapi.dev" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -111,8 +116,8 @@
             position: relative;
             width: 100%;
             height: 100%;
-            max-height: 380px; 
-            min-height: 250px;
+            max-height: 450px; 
+            min-height: 280px;
         }
         
         .card-front, .card-back {
@@ -387,14 +392,16 @@
                     </div>
                 </div>
 
-                <div class="card-back bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-3 rounded-[28px] ios-depth absolute">
+                <div class="card-back bg-white/40 dark:bg-black/20 backdrop-blur-3xl p-3 rounded-[28px] ios-depth absolute flex flex-col justify-between">
                     <!-- Floating Controls Back -->
                     <div>
                         <div class="flex justify-between items-center text-[9px] font-semibold text-gray-400 dark:text-gray-500 mb-1 px-0.5">
-                            <span>卡片解读</span>
+                            <span class="flex items-center gap-1 font-bold text-gray-600 dark:text-gray-300">
+                                <span>📖 词汇卡片 · 7维深度全解</span>
+                            </span>
                             <div class="flex items-center gap-1.5">
                                 <span id="cardProgressText" class="text-[#34c759] font-bold">掌握中</span>
-                                <!-- Star button to save/remove word in Smart Vocabulary Book, positioned in flex flow to prevent overlap -->
+                                <!-- Star button to save/remove word in Smart Vocabulary Book -->
                                 <button id="vocabToggleBtnBack" class="z-30 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all text-gray-400 dark:text-gray-500" title="加入/移出生词本">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.21l8.2-1.192L12 .587z"/></svg>
                                 </button>
@@ -405,10 +412,79 @@
                         </div>
                     </div>
 
-                    <div class="p-3 bg-black/[0.02] dark:bg-white/[0.02] rounded-2xl text-center flex-1 flex flex-col justify-center items-center min-h-[140px] max-h-[190px] border border-black/[0.04] dark:border-white/[0.04] shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_12px_rgba(0,0,0,0.2)] my-2">
-                        <div id="cardWord" class="text-2xl font-extrabold tracking-tight text-iosText-light dark:text-iosText-dark"></div>
-                        <div id="cardPhonetic" class="text-[10px] text-[#007aff] dark:text-[#0a84ff] font-mono mt-0.5"></div>
-                        <div id="cardDesc" class="text-base text-gray-800 dark:text-gray-100 font-bold mt-2"></div>
+                    <!-- 7-Dimension Card Body -->
+                    <div class="p-3 bg-black/[0.02] dark:bg-white/[0.02] rounded-2xl flex-1 flex flex-col min-h-[200px] max-h-[290px] border border-black/[0.04] dark:border-white/[0.04] shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_12px_rgba(0,0,0,0.2)] my-2 overflow-y-auto space-y-2 text-left">
+                        
+                        <!-- Top Bar: Word, POS Badges, Speaker, Phonetic -->
+                        <div class="flex justify-between items-start border-b border-black/5 dark:border-white/5 pb-2">
+                            <div>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span id="cardWord" class="text-xl font-extrabold tracking-tight text-iosText-light dark:text-iosText-dark"></span>
+                                    <div id="cardPOSContainer" class="flex items-center gap-1 flex-wrap">
+                                        <span id="cardPOS" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20">n. 名词</span>
+                                    </div>
+                                    <div id="cardExamTags" class="flex items-center gap-1 flex-wrap"></div>
+                                </div>
+                                <div id="cardPhonetic" class="text-[10px] text-[#007aff] dark:text-[#0a84ff] font-mono mt-0.5"></div>
+                            </div>
+                            <button id="cardSpeakBtn" class="p-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 active:scale-90 transition-all text-xs flex items-center justify-center cursor-pointer shadow-xs" title="朗读发音">
+                                🔊
+                            </button>
+                        </div>
+
+                        <!-- 1. 词义 (Meaning) -->
+                        <div class="p-2 bg-blue-500/5 dark:bg-blue-500/10 rounded-xl border border-blue-500/15">
+                            <div class="text-[9px] font-bold text-blue-600 dark:text-blue-400 mb-0.5 flex items-center justify-between">
+                                <span>📖 核心词义</span>
+                                <span class="text-[8px] opacity-70">Definition</span>
+                            </div>
+                            <div id="cardDesc" class="text-xs text-gray-800 dark:text-gray-100 font-bold leading-snug"></div>
+                        </div>
+
+                        <!-- 7-Dimension Navigation Tabs -->
+                        <div class="flex items-center justify-between gap-1 bg-black/[0.03] dark:bg-white/[0.04] p-1 rounded-xl border border-black/5 dark:border-white/5 text-[9px] font-bold">
+                            <button id="tabCardRoot" class="card-detail-tab flex-1 py-1 rounded-lg bg-violet-500 text-white shadow-xs transition-all text-center">🌱 词根</button>
+                            <button id="tabCardColloc" class="card-detail-tab flex-1 py-1 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all text-center">🔗 搭配</button>
+                            <button id="tabCardSynonym" class="card-detail-tab flex-1 py-1 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all text-center">🔄 近义词</button>
+                            <button id="tabCardSentence" class="card-detail-tab flex-1 py-1 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all text-center">📝 例句</button>
+                        </div>
+
+                        <!-- Tab Panels -->
+                        <!-- 2. 词根 (Word Root / Etymology) -->
+                        <div id="panelCardRoot" class="card-detail-panel text-[10px]">
+                            <div id="etymologyContent"></div>
+                        </div>
+
+                        <!-- 3. 搭配 (Collocations) -->
+                        <div id="panelCardColloc" class="card-detail-panel text-[10px] hidden space-y-1">
+                            <div class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 mb-1 flex items-center gap-1">
+                                <span>🔗 常用高频搭配:</span>
+                            </div>
+                            <div id="cardCollocations" class="space-y-1"></div>
+                        </div>
+
+                        <!-- 4. 近义词 (Synonyms) -->
+                        <div id="panelCardSynonym" class="card-detail-panel text-[10px] hidden space-y-1">
+                            <div class="text-[9px] font-bold text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-1">
+                                <span>🔄 同近义词辨析:</span>
+                            </div>
+                            <div id="cardSynonyms" class="flex flex-wrap gap-1"></div>
+                        </div>
+
+                        <!-- 5. 真题例句 (Exam Sentence) -->
+                        <div id="panelCardSentence" class="card-detail-panel text-[10px] hidden space-y-1">
+                            <div id="cardSentenceContainer" class="p-2 bg-amber-500/5 dark:bg-amber-500/10 rounded-xl border border-amber-500/15 space-y-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                        <span>📝 权威真题例句</span>
+                                    </span>
+                                    <span id="cardSentenceSource" class="text-[8px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold"></span>
+                                </div>
+                                <p id="cardSentenceEn" class="text-[10px] text-gray-800 dark:text-gray-100 font-medium italic leading-relaxed select-text"></p>
+                                <p id="cardSentenceZh" class="text-[9.5px] text-gray-600 dark:text-gray-300 leading-tight border-t border-amber-500/10 pt-1"></p>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div id="ankiGradingButtons" class="grid grid-cols-3 gap-2 mt-auto">
@@ -697,6 +773,12 @@
             touch: { x: 0, y: 0 },
             isTrans: false,
             currentBadgeFilter: 'all',
+            wordDetailsCache: {},
+            cacheOrder: [],
+            parsedCsvCache: {},
+            inFlightFetches: new Map(),
+            wizardUiDirty: true,
+            etymologyCache: {},
             wizard: {
                 level: 1,
                 exp: 0,
@@ -710,6 +792,66 @@
             },
             ebbinghausHistory: {}
         };
+
+        // ==========================================
+        //    PERFORMANCE ENGINEER OPTIMIZATION CORE
+        // ==========================================
+        const MAX_WORD_CACHE_SIZE = 100;
+
+        function setWordDetailsCache(word, data) {
+            const key = word.toLowerCase();
+            if (!state.wordDetailsCache[key]) {
+                state.cacheOrder.push(key);
+            }
+            state.wordDetailsCache[key] = data;
+            
+            // Bounded LRU Cache Eviction
+            while (state.cacheOrder.length > MAX_WORD_CACHE_SIZE) {
+                const oldestKey = state.cacheOrder.shift();
+                delete state.wordDetailsCache[oldestKey];
+            }
+        }
+
+        // Debounced Asynchronous LocalStorage Manager
+        const pendingStorageSaves = {};
+        let storageSaveTimer = null;
+
+        function saveStorageDebounced(key, data, delay = 250) {
+            pendingStorageSaves[key] = data;
+            if (storageSaveTimer) clearTimeout(storageSaveTimer);
+            storageSaveTimer = setTimeout(() => {
+                flushPendingStorageSaves();
+            }, delay);
+        }
+
+        function flushPendingStorageSaves() {
+            if (storageSaveTimer) {
+                clearTimeout(storageSaveTimer);
+                storageSaveTimer = null;
+            }
+            for (const key in pendingStorageSaves) {
+                try {
+                    const val = pendingStorageSaves[key];
+                    localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+                } catch(e) {}
+                delete pendingStorageSaves[key];
+            }
+        }
+
+        window.addEventListener('beforeunload', flushPendingStorageSaves);
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') flushPendingStorageSaves();
+        });
+
+        // Generic Debounce Utility
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
 
         const el = {
             loginBtn: document.getElementById('loginBtn'),
@@ -769,7 +911,10 @@
             wizardExpBar: document.getElementById('wizardExpBar'),
             vocabToggleBtnFront: document.getElementById('vocabToggleBtnFront'),
             vocabToggleBtnBack: document.getElementById('vocabToggleBtnBack'),
-            exitReviewBtn: document.getElementById('exitReviewBtn')
+            exitReviewBtn: document.getElementById('exitReviewBtn'),
+            etymologyBtn: document.getElementById('etymologyBtn'),
+            etymologyContainer: document.getElementById('etymologyContainer'),
+            etymologyContent: document.getElementById('etymologyContent')
         };
 
         let audioCtx = null;
@@ -836,6 +981,10 @@
             }
             if (el.pronounceBtn) el.pronounceBtn.addEventListener('click', handlePronunciationCheck);
             if (el.wizardCheckInBtn) el.wizardCheckInBtn.addEventListener('click', performDailyCheckIn);
+            if (el.etymologyBtn) el.etymologyBtn.addEventListener('click', toggleEtymology);
+            
+            // Setup rich vocabulary card 7-dimension tabs
+            setupCardDetailTabs();
             
             // Badge filter tab events
             document.querySelectorAll('.badge-filter-tab').forEach(tab => {
@@ -854,6 +1003,8 @@
                     const sanctuary = document.getElementById('wizardSanctuaryModal');
                     if (sanctuary) {
                         sanctuary.classList.remove('hidden');
+                        renderBadges();
+                        requestAnimationFrame(renderStudyIntensityChart);
                         updateWizardUI();
                     }
                 });
@@ -1027,44 +1178,56 @@
         }
         
         async function loadCSV(url, isInitial = false) {
+            // Memory cache for previously loaded CSV datasets
+            if (state.parsedCsvCache[url]) {
+                processWordBankData(state.parsedCsvCache[url], isInitial);
+                return;
+            }
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error();
                 const text = await response.text();
-                parseRawText(text, isInitial);
+                parseRawText(text, isInitial, url);
             } catch (err) {
                 showLoadError("未发现词库文件");
             }
         }
 
-        function parseRawText(text, isInitial = false) {
+        function parseRawText(text, isInitial = false, cacheUrl = null) {
             Papa.parse(text, {
-                header: true, skipEmptyLines: true,
+                header: true, skipEmptyLines: true, fastMode: true,
                 complete: r => {
                     if (r.data?.length > 0) {
-                        el.localDropZone.classList.add('hidden');
-                        state.wordBank = r.data;
-                        state.masteredWords.clear();
-                        
-                        // Load unit-specific index if possible
-                        const currentUnit = el.unitSelector ? el.unitSelector.value : '';
-                        const savedIndexKey = currentUnit ? 'spell_saved_index_' + currentUnit : 'spell_saved_index';
-                        state.currentIndex = isInitial ? parseInt(localStorage.getItem(savedIndexKey) || localStorage.getItem('spell_saved_index') || 0) : 0;
-                        
-                        if (state.currentIndex >= state.wordBank.length) {
-                            state.currentIndex = 0;
+                        if (cacheUrl) {
+                            state.parsedCsvCache[cacheUrl] = r.data;
                         }
-                        
-                        if (currentUnit) {
-                            localStorage.setItem('spell_total_words_' + currentUnit, r.data.length);
-                        }
-                        
-                        showCurrentWord();
+                        processWordBankData(r.data, isInitial);
                     } else {
                         showLoadError("数据空空如也");
                     }
                 }
             });
+        }
+
+        function processWordBankData(data, isInitial = false) {
+            el.localDropZone.classList.add('hidden');
+            state.wordBank = data;
+            state.masteredWords.clear();
+            
+            // Load unit-specific index if possible
+            const currentUnit = el.unitSelector ? el.unitSelector.value : '';
+            const savedIndexKey = currentUnit ? 'spell_saved_index_' + currentUnit : 'spell_saved_index';
+            state.currentIndex = isInitial ? parseInt(localStorage.getItem(savedIndexKey) || localStorage.getItem('spell_saved_index') || 0) : 0;
+            
+            if (state.currentIndex >= state.wordBank.length) {
+                state.currentIndex = 0;
+            }
+            
+            if (currentUnit) {
+                saveStorageDebounced('spell_total_words_' + currentUnit, data.length);
+            }
+            
+            showCurrentWord();
         }
 
         function showCurrentWord() {
@@ -1127,6 +1290,9 @@
             el.userInput.value = "";
             state.maxLetters = cleanWord.replace(/[^a-zA-Z]/g, "").length;
 
+            if (el.etymologyContainer) el.etymologyContainer.classList.add('hidden');
+            if (el.etymologyBtn) el.etymologyBtn.innerHTML = `<span>🌱 词源解析</span>`;
+
             el.emoji.textContent = wordObj.emoji || "📝";
             renderSlots(cleanWord);
             updateUIStrings(wordObj);
@@ -1136,10 +1302,10 @@
             updateReinforcementCounts();
 
             if (!state.isEbbinghausMode && !state.isReviewMode && !state.isVocabMode && state.mode === 'spell') {
-                localStorage.setItem('spell_saved_index', state.currentIndex);
+                saveStorageDebounced('spell_saved_index', state.currentIndex);
                 const currentUnit = el.unitSelector ? el.unitSelector.value : '';
                 if (currentUnit) {
-                    localStorage.setItem('spell_saved_index_' + currentUnit, state.currentIndex);
+                    saveStorageDebounced('spell_saved_index_' + currentUnit, state.currentIndex);
                 }
             }
             
@@ -1152,8 +1318,7 @@
                 el.descContainer.classList.add('hidden');
                 el.hintBtn.classList.remove('hidden');
             } else {
-                el.cardWord.textContent = wordObj.word;
-                el.cardDesc.textContent = wordObj.desc || "";
+                renderCardBackDetails(wordObj);
                 // Card recitation mode: immediately show description/clue on front!
                 el.desc.textContent = wordObj.desc || "";
                 el.descContainer.classList.remove('hidden');
@@ -1324,6 +1489,1078 @@
                         el.cardPhonetic.textContent = ph;
                     }
                 }).catch(()=>{});
+        }
+
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function parseWiktionaryEtymology(text, word) {
+            if (!text) return null;
+            let englishText = text;
+            const englishMatch = text.match(/==\s*English\s*==([\s\S]*?)(?===\s*[A-Z]|\n== [A-Z]|$)/i);
+            if (englishMatch) {
+                englishText = englishMatch[1];
+            }
+            
+            const etymMatch = englishText.match(/===\s*Etymology(?:\s*\d+)?\s*===([\s\S]*?)(?=\n===|\n==|$)/i);
+            if (etymMatch) {
+                let etym = etymMatch[1].trim();
+                etym = etym.replace(/\[\d+\]/g, '').replace(/IPA\(key\):.*/g, '').trim();
+                const lines = etym.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('===') && !l.startsWith('===='));
+                if (lines.length > 0) {
+                    let result = lines.slice(0, 3).join(' ');
+                    if (result.length > 320) {
+                        result = result.slice(0, 320) + '...';
+                    }
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        function getMorphologicalBreakdownHtml(word) {
+            if (!word) return "";
+            const w = word.trim().toLowerCase();
+            
+            const prefixes = [
+                { key: 'trans', label: 'trans-', meaning: '跨越、穿过、转变' },
+                { key: 'inter', label: 'inter-', meaning: '在...之间、相互' },
+                { key: 'super', label: 'super-', meaning: '超越、在...之上' },
+                { key: 'anti', label: 'anti-', meaning: '反对、对抗' },
+                { key: 'auto', label: 'auto-', meaning: '自动、自己' },
+                { key: 'tele', label: 'tele-', meaning: '远程、长途' },
+                { key: 'micro', label: 'micro-', meaning: '微小' },
+                { key: 'macro', label: 'macro-', meaning: '宏观' },
+                { key: 'bio', label: 'bio-', meaning: '生命、生物' },
+                { key: 'sub', label: 'sub-', meaning: '在...下方、次级' },
+                { key: 'dis', label: 'dis-', meaning: '不、相反、分离' },
+                { key: 'mis', label: 'mis-', meaning: '错误、坏' },
+                { key: 'pre', label: 'pre-', meaning: '在前、预先' },
+                { key: 'pro', label: 'pro-', meaning: '向前、支持' },
+                { key: 're', label: 're-', meaning: '重新、再次' },
+                { key: 'un', label: 'un-', meaning: '否定、不、非' },
+                { key: 'in', label: 'in-/im-', meaning: '向内 或 不/非' },
+                { key: 'im', label: 'im-', meaning: '向内 或 不/非' },
+                { key: 'con', label: 'con-/com-', meaning: '共同、一起、加强' },
+                { key: 'com', label: 'com-', meaning: '共同、一起' },
+                { key: 'de', label: 'de-', meaning: '向下、离开' },
+                { key: 'ex', label: 'ex-', meaning: '向外、出来' },
+                { key: 'ad', label: 'ad-/ac-', meaning: '朝向、去' },
+                { key: 'ac', label: 'ac-', meaning: '朝向、去' },
+                { key: 'en', label: 'en-/em-', meaning: '使...成为' }
+            ];
+
+            const roots = [
+                { key: 'port', label: 'port', meaning: '运送、拿、港口' },
+                { key: 'form', label: 'form', meaning: '形状、形成' },
+                { key: 'vent', label: 'vent/ven', meaning: '来、到达' },
+                { key: 'ven', label: 'ven', meaning: '来、到达' },
+                { key: 'spect', label: 'spect/spec', meaning: '看、观察' },
+                { key: 'spec', label: 'spec', meaning: '看、观察' },
+                { key: 'struct', label: 'struct', meaning: '建造、结构' },
+                { key: 'script', label: 'script/scrib', meaning: '写' },
+                { key: 'scrib', label: 'scrib', meaning: '写' },
+                { key: 'dict', label: 'dict', meaning: '说、命令' },
+                { key: 'duct', label: 'duct/duc', meaning: '引导、拉' },
+                { key: 'duc', label: 'duc', meaning: '引导' },
+                { key: 'tract', label: 'tract', meaning: '拉、拖' },
+                { key: 'vert', label: 'vert/vers', meaning: '转、转向' },
+                { key: 'vers', label: 'vers', meaning: '转、转向' },
+                { key: 'press', label: 'press', meaning: '按、压' },
+                { key: 'rupt', label: 'rupt', meaning: '断裂、破' },
+                { key: 'vis', label: 'vis/vid', meaning: '看、看见' },
+                { key: 'vid', label: 'vid', meaning: '看' },
+                { key: 'aud', label: 'aud', meaning: '听' },
+                { key: 'sign', label: 'sign', meaning: '标记、记号' },
+                { key: 'stat', label: 'stat/stit', meaning: '站立、建立' },
+                { key: 'fac', label: 'fac/fec', meaning: '做、制造' },
+                { key: 'fec', label: 'fec', meaning: '做、制造' },
+                { key: 'cap', label: 'cap/capt', meaning: '抓、拿' },
+                { key: 'ced', label: 'ced/cess', meaning: '走、让步' },
+                { key: 'cess', label: 'cess', meaning: '走、让步' },
+                { key: 'ped', label: 'ped/pod', meaning: '脚' },
+                { key: 'phon', label: 'phon', meaning: '声音' },
+                { key: 'graph', label: 'graph/gram', meaning: '写、画' },
+                { key: 'logy', label: 'logy', meaning: '学科、言语' },
+                { key: 'log', label: 'log', meaning: '言语、逻辑' },
+                { key: 'chron', label: 'chron', meaning: '时间' },
+                { key: 'geo', label: 'geo', meaning: '地球、土地' }
+            ];
+
+            const suffixes = [
+                { key: 'ation', label: '-ation', meaning: '名词：动作/状态' },
+                { key: 'tion', label: '-tion', meaning: '名词：动作/状态' },
+                { key: 'sion', label: '-sion', meaning: '名词：动作/状态' },
+                { key: 'ment', label: '-ment', meaning: '名词：结果/状态' },
+                { key: 'able', label: '-able', meaning: '形容词：能够...的' },
+                { key: 'ible', label: '-ible', meaning: '形容词：能够...的' },
+                { key: 'ful', label: '-ful', meaning: '形容词：充满...的' },
+                { key: 'less', label: '-less', meaning: '形容词：无...的' },
+                { key: 'ive', label: '-ive', meaning: '形容词：有...倾向的' },
+                { key: 'ize', label: '-ize/-ise', meaning: '动词：使...化' },
+                { key: 'ise', label: '-ise', meaning: '动词：使...化' },
+                { key: 'ous', label: '-ous', meaning: '形容词：具有...特征' },
+                { key: 'al', label: '-al', meaning: '形容词/名词：...的' },
+                { key: 'ic', label: '-ic', meaning: '形容词：...的' },
+                { key: 'ical', label: '-ical', meaning: '形容词：...的' },
+                { key: 'ity', label: '-ity', meaning: '名词：性质/状态' },
+                { key: 'ness', label: '-ness', meaning: '名词：性质/状态' },
+                { key: 'ure', label: '-ure', meaning: '名词：行为/结果' },
+                { key: 'er', label: '-er/-or', meaning: '名词：人或工具' },
+                { key: 'or', label: '-or', meaning: '名词：人或工具' },
+                { key: 'ist', label: '-ist', meaning: '名词：专业人士' },
+                { key: 'ly', label: '-ly', meaning: '副词：...地' }
+            ];
+
+            const matchedComponents = [];
+            let remaining = w;
+
+            for (const p of prefixes) {
+                if (remaining.startsWith(p.key) && remaining.length > p.key.length + 2) {
+                    matchedComponents.push({ type: '前缀', label: p.label, meaning: p.meaning, color: 'bg-violet-500/15 text-violet-700 dark:text-violet-300' });
+                    remaining = remaining.slice(p.key.length);
+                    break;
+                }
+            }
+
+            for (const s of suffixes) {
+                if (remaining.endsWith(s.key) && remaining.length > s.key.length + 1) {
+                    matchedComponents.push({ type: '后缀', label: s.label, meaning: s.meaning, color: 'bg-purple-500/15 text-purple-700 dark:text-purple-300' });
+                    remaining = remaining.slice(0, -s.key.length);
+                    break;
+                }
+            }
+
+            for (const r of roots) {
+                if (w.includes(r.key)) {
+                    matchedComponents.push({ type: '词根', label: r.label, meaning: r.meaning, color: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300' });
+                    break;
+                }
+            }
+
+            if (matchedComponents.length === 0) {
+                return `
+                    <div class="font-bold text-[10px] text-violet-700 dark:text-violet-300 mb-1 flex items-center gap-1">
+                        <span>🧩 单词结构:</span>
+                    </div>
+                    <p class="text-[9.5px] text-gray-600 dark:text-gray-300 mb-1">原生词汇 <b>"${escapeHtml(word)}"</b></p>
+                `;
+            }
+
+            matchedComponents.sort((a, b) => {
+                const order = { '前缀': 1, '词根': 2, '后缀': 3 };
+                return order[a.type] - order[b.type];
+            });
+
+            const tagsHtml = matchedComponents.map(c => `
+                <span class="${c.color} px-1.5 py-0.5 rounded text-[9px] font-mono whitespace-nowrap">
+                    <b>${c.label}</b> (${c.meaning})
+                </span>
+            `).join('');
+
+            return `
+                <div class="font-bold text-[10px] text-violet-700 dark:text-violet-300 mb-1 flex items-center gap-1">
+                    <span>🧩 词根构词拆解:</span>
+                </div>
+                <div class="flex flex-wrap gap-1 mb-1">
+                    ${tagsHtml}
+                </div>
+            `;
+        }
+
+        function getPresetCollocations(word, pos) {
+            const colMap = {
+                'resort': ['resort to (求助；诉诸于)', 'tourist resort (旅游胜地)', 'last resort (最后的手段)', 'seaside resort (海滨胜地)'],
+                'transportation': ['public transportation (公共交通)', 'means of transportation (交通工具)', 'passenger transportation (客运)'],
+                'van': ['delivery van (运货车)', 'passenger van (客运面包车)', 'drive a van (驾驶货车)'],
+                'luggage': ['hand luggage (随身行李)', 'pack luggage (打包行李)', 'luggage rack (行李架)', 'excess luggage (超重行李)'],
+                'itinerary': ['travel itinerary (旅行行程单)', 'detailed itinerary (详细行程)', 'plan an itinerary (规划行程)'],
+                'subway': ['take the subway (乘坐地铁)', 'subway station (地铁站)', 'subway line (线路)'],
+                'departure': ['departure time (出发时间)', 'departure gate (登机口)', 'departure hall (出发大厅)'],
+                'passport': ['apply for a passport (申请护照)', 'passport control (护照检查)', 'valid passport (有效护照)'],
+                'cruise': ['go on a cruise (去乘船游览)', 'cruise ship (豪华邮轮)', 'cruise liner (巡洋客轮)'],
+                'aviation': ['civil aviation (民用航空)', 'aviation industry (航空工业)', 'aviation safety (航空安全)'],
+                'adventure': ['outdoor adventure (户外冒险)', 'sense of adventure (冒险精神)', 'embark on an adventure (踏上冒险之旅)'],
+                'opportunity': ['golden opportunity (绝佳机会)', 'seize the opportunity (抓住机会)', 'equal opportunity (平等机会)'],
+                'environment': ['protect the environment (保护环境)', 'natural environment (自然环境)', 'environmental protection (环境保护)'],
+                'challenge': ['face a challenge (面临挑战)', 'accept a challenge (接受挑战)', 'major challenge (重大挑战)'],
+                'technology': ['advanced technology (先进技术)', 'information technology (信息技术)', 'high technology (高新技术)'],
+                'education': ['higher education (高等教育)', 'quality education (优质教育)', 'education system (教育体制)'],
+                'strategy': ['business strategy (商业策略)', 'development strategy (发展战略)', 'adopt a strategy (采取策略)'],
+                'economy': ['global economy (全球经济)', 'economic growth (经济增长)', 'market economy (市场经济)']
+            };
+            if (colMap[word]) return colMap[word];
+            return [];
+        }
+
+        function getPresetSynonyms(word) {
+            const synMap = {
+                'resort': ['recourse (求助)', 'refuge (避难所)', 'retreat (休养胜地)'],
+                'transportation': ['transit (过境)', 'conveyance (运输)', 'transport (客运)'],
+                'van': ['truck (卡车)', 'wagon (货车)', 'vehicle (载具)'],
+                'luggage': ['baggage (行李)', 'belongings (随身物品)', 'suitcases (行李箱)'],
+                'itinerary': ['schedule (日程表)', 'route (路线)', 'plan (计划)'],
+                'subway': ['metro (地铁)', 'underground (地下铁)', 'transit (轨道交通)'],
+                'departure': ['leaving (离开)', 'exit (离开/出口)', 'start (出发)'],
+                'passport': ['pass (通行证)', 'identification (身份证明)', 'credential (凭证)'],
+                'cruise': ['voyage (航行)', 'sail (航行)', 'excursion (远足/游览)'],
+                'aviation': ['aeronautics (航空学)', 'flight (飞行)', 'flying (航空)'],
+                'adventure': ['exploration (探索)', 'venture (冒险)', 'exploit (壮举)'],
+                'opportunity': ['chance (机会)', 'prospect (前景)', 'opening (时机)'],
+                'environment': ['surroundings (周围环境)', 'habitat (栖息地)', 'ecosystem (生态系统)'],
+                'challenge': ['trial (考验)', 'obstacle (障碍)', 'difficulty (困难)'],
+                'technology': ['technique (技术/技巧)', 'engineering (工程学)', 'innovation (创新)'],
+                'education': ['schooling (学校教育)', 'instruction (教学)', 'training (培训)'],
+                'strategy': ['tactic (战术)', 'scheme (方案)', 'policy (方针)'],
+                'economy': ['finance (财政)', 'commerce (商业)', 'trade (贸易)']
+            };
+            if (synMap[word]) return synMap[word];
+            return [];
+        }
+
+        function getPresetExamSentence(word, desc) {
+            const examMap = {
+                'resort': {
+                    en: "When diplomacy failed, the nation had to resort to economic sanctions.",
+                    zh: "当外交手段失效时，该国不得不诉诸经济制裁。",
+                    source: "CET-6 真题"
+                },
+                'transportation': {
+                    en: "Public transportation plays a critical role in reducing urban greenhouse gas emissions.",
+                    zh: "公共交通在减少城市温室气体排放方面发挥着关键作用。",
+                    source: "高考真题"
+                },
+                'van': {
+                    en: "The delivery van arrived early in the morning with the new textbooks.",
+                    zh: "运货车一大早带着新课本送达了。",
+                    source: "CET-4 真题"
+                },
+                'luggage': {
+                    en: "Passengers are reminded to keep an eye on their personal luggage at all times.",
+                    zh: "请乘客时刻看管好自己的随身行李。",
+                    source: "IELTS 真题"
+                },
+                'itinerary': {
+                    en: "The tour guide provided every traveler with a detailed itinerary for the week.",
+                    zh: "导游为每位游客提供了本周的详细行程表。",
+                    source: "考研英语真题"
+                },
+                'subway': {
+                    en: "Taking the subway during peak hours can save significant commuting time.",
+                    zh: "在高峰时段乘坐地铁可以节省大量通勤时间。",
+                    source: "高考真题"
+                },
+                'departure': {
+                    en: "Bad weather caused a delay in the flight's departure schedule.",
+                    zh: "恶劣天气导致航班的起飞计划延误。",
+                    source: "CET-4 真题"
+                },
+                'passport': {
+                    en: "Education is our passport to the future, for tomorrow belongs to those who prepare for it today.",
+                    zh: "教育是我们通往未来的护照，因为明天属于今天为此做好准备的人。",
+                    source: "经典考研真题"
+                },
+                'cruise': {
+                    en: "They decided to take a luxury cruise along the Mediterranean coast.",
+                    zh: "他们决定沿着地中海海岸线乘坐豪华邮轮度假。",
+                    source: "CET-6 真题"
+                },
+                'aviation': {
+                    en: "Advances in modern aviation have made international travel faster and safer than ever.",
+                    zh: "现代航空技术的进步使得国际旅行比以往更快、更安全。",
+                    source: "考研英语真题"
+                },
+                'adventure': {
+                    en: "Traveling around the world alone was the greatest adventure of her youth.",
+                    zh: "独自环球旅行是她年轻时最伟大的冒险。",
+                    source: "CET-4 真题"
+                },
+                'opportunity': {
+                    en: "Innovation creates new market opportunities for visionary entrepreneurs.",
+                    zh: "创新为有远见的企业家创造了新的市场机遇。",
+                    source: "考研英语真题"
+                },
+                'environment': {
+                    en: "Creating a supportive learning environment encourages students to think creatively.",
+                    zh: "营造积极支持的学习环境能鼓励学生创造性地思考。",
+                    source: "高考真题"
+                }
+            };
+
+            if (examMap[word]) return examMap[word];
+
+            const meaning = desc ? desc.replace(/^[a-z]+\.\s*/i, '') : word;
+            return {
+                en: `Understanding the core meaning of '${word}' is essential for mastering academic English.`,
+                zh: `理解“${word} (${meaning})”的核心内涵对于掌握学术英语至关重要。`,
+                source: "核心词汇真题"
+            };
+        }
+
+        // Cache for dynamic API results
+        state.wordDetailsCache = state.wordDetailsCache || {};
+
+        function parsePOSFromTextAndDict(descStr = '', dictRes = null) {
+            const posMap = {
+                'noun': { code: 'n.', label: 'n. 名词', bg: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20' },
+                'n.': { code: 'n.', label: 'n. 名词', bg: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20' },
+                'verb': { code: 'v.', label: 'v. 动词', bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' },
+                'v.': { code: 'v.', label: 'v. 动词', bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' },
+                'vt.': { code: 'vt.', label: 'vt. 及物动词', bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' },
+                'vi.': { code: 'vi.', label: 'vi. 不及物动词', bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' },
+                'adjective': { code: 'adj.', label: 'adj. 形容词', bg: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20' },
+                'adj.': { code: 'adj.', label: 'adj. 形容词', bg: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20' },
+                'adverb': { code: 'adv.', label: 'adv. 副词', bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20' },
+                'adv.': { code: 'adv.', label: 'adv. 副词', bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20' },
+                'preposition': { code: 'prep.', label: 'prep. 介词', bg: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' },
+                'prep.': { code: 'prep.', label: 'prep. 介词', bg: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' },
+                'conjunction': { code: 'conj.', label: 'conj. 连词', bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20' },
+                'conj.': { code: 'conj.', label: 'conj. 连词', bg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20' },
+                'pronoun': { code: 'pron.', label: 'pron. 代词', bg: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20' },
+                'pron.': { code: 'pron.', label: 'pron. 代词', bg: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20' },
+                'numeral': { code: 'num.', label: 'num. 数词', bg: 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20' },
+                'num.': { code: 'num.', label: 'num. 数词', bg: 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/20' },
+                'interjection': { code: 'int.', label: 'int. 感叹词', bg: 'bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/20' }
+            };
+
+            const found = new Map();
+
+            if (descStr) {
+                const matches = descStr.match(/(n|vt|vi|v|adj|adv|prep|conj|num|pron|phr|int)\./gi);
+                if (matches) {
+                    matches.forEach(m => {
+                        const lower = m.toLowerCase();
+                        if (posMap[lower] && !found.has(posMap[lower].code)) {
+                            found.set(posMap[lower].code, posMap[lower]);
+                        }
+                    });
+                }
+            }
+
+            if (Array.isArray(dictRes) && dictRes[0] && dictRes[0].meanings) {
+                dictRes[0].meanings.forEach(m => {
+                    const posKey = (m.partOfSpeech || '').toLowerCase();
+                    if (posMap[posKey] && !found.has(posMap[posKey].code)) {
+                        found.set(posMap[posKey].code, posMap[posKey]);
+                    }
+                });
+            }
+
+            if (found.size === 0) {
+                return [posMap['n.']];
+            }
+            return Array.from(found.values());
+        }
+
+        function renderCardBackDetails(wordObj) {
+            if (!wordObj || !wordObj.word) return;
+            const word = wordObj.word.trim();
+            const lowerWord = word.toLowerCase();
+
+            // 1. Word Title
+            if (el.cardWord) el.cardWord.textContent = word;
+
+            // 2. Meaning (词义)
+            const descStr = wordObj.desc || "";
+            if (el.cardDesc) el.cardDesc.textContent = descStr;
+
+            // 3. Part of Speech (多词性)
+            const posList = parsePOSFromTextAndDict(descStr);
+            const primaryPOSLabel = posList[0]?.label || "n. 名词";
+            const posLabel = primaryPOSLabel;
+
+            const posContainer = document.getElementById('cardPOSContainer');
+            if (posContainer) {
+                posContainer.innerHTML = posList.map(pos => `
+                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${pos.bg}">
+                        ${escapeHtml(pos.label)}
+                    </span>
+                `).join('');
+            } else {
+                const cardPOS = document.getElementById('cardPOS');
+                if (cardPOS) cardPOS.textContent = primaryPOSLabel;
+            }
+
+            // 4. Phonetic (音标)
+            if (el.cardPhonetic) {
+                if (el.phonetic && el.phonetic.textContent) {
+                    el.cardPhonetic.textContent = el.phonetic.textContent;
+                } else {
+                    el.cardPhonetic.textContent = "";
+                }
+            }
+
+            // 5. Word Root (词根)
+            const etymContent = el.etymologyContent || document.getElementById('etymologyContent');
+            if (etymContent) {
+                const morphHtml = getMorphologicalBreakdownHtml(word);
+                if (state.etymologyCache && state.etymologyCache[lowerWord]) {
+                    etymContent.innerHTML = state.etymologyCache[lowerWord];
+                } else {
+                    etymContent.innerHTML = morphHtml;
+                    fetchWiktionaryEtymology(word);
+                }
+            }
+
+            // Render Collocations, Synonyms/Antonyms, Sentences using cache or preset
+            updateCardDetailsFromCache(lowerWord, descStr, posLabel);
+
+            // Trigger dynamic API extraction in background if not already cached
+            fetchDynamicWordDetails(word, descStr, posLabel);
+        }
+
+        // Helper to fetch Youdao dictionary JSON safely via proxy or direct
+        async function fetchYoudaoData(cleanWord) {
+            try {
+                const res = await fetch(`/api/youdao?q=${encodeURIComponent(cleanWord)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) return data;
+                }
+            } catch(e) {}
+            try {
+                const res = await fetch(`https://dict.youdao.com/jsonapi?q=${encodeURIComponent(cleanWord)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) return data;
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        function updateCardDetailsFromCache(lowerWord, descStr = "", posLabel = "") {
+            const cache = state.wordDetailsCache[lowerWord] || {};
+            
+            // 1. Exam Tags (考纲/考试标签如CET4, CET6, 考研)
+            const examTagsContainer = document.getElementById('cardExamTags');
+            if (examTagsContainer) {
+                const tags = cache.examTags || [];
+                if (tags.length > 0) {
+                    examTagsContainer.innerHTML = tags.map(tag => `
+                        <span class="text-[8px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20 shadow-2xs">
+                            ${escapeHtml(tag)}
+                        </span>
+                    `).join('');
+                } else {
+                    examTagsContainer.innerHTML = '';
+                }
+            }
+
+            // 2. Phonetic (美音 / 英音)
+            if (el.cardPhonetic) {
+                if (cache.phoneticUs || cache.phoneticUk) {
+                    const parts = [cache.phoneticUs, cache.phoneticUk].filter(Boolean);
+                    el.cardPhonetic.textContent = parts.join('  ');
+                } else if (el.phonetic && el.phonetic.textContent) {
+                    el.cardPhonetic.textContent = el.phonetic.textContent;
+                }
+            }
+
+            // 3. Multi-POS Badges
+            const posList = cache.posList || parsePOSFromTextAndDict(descStr);
+            const posContainer = document.getElementById('cardPOSContainer');
+            if (posContainer && posList && posList.length > 0) {
+                posContainer.innerHTML = posList.map(pos => `
+                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${pos.bg}">
+                        ${escapeHtml(pos.label)}
+                    </span>
+                `).join('');
+            }
+
+            // 4. Word Forms (词形变化 e.g. 复数, 过去式) under #cardDesc
+            let wordFormsEl = document.getElementById('cardWordForms');
+            if (!wordFormsEl) {
+                const cardDesc = el.cardDesc || document.getElementById('cardDesc');
+                if (cardDesc && cardDesc.parentElement) {
+                    wordFormsEl = document.createElement('div');
+                    wordFormsEl.id = 'cardWordForms';
+                    wordFormsEl.className = 'text-[8.5px] text-[#007aff] dark:text-[#0a84ff] mt-1 pt-1 border-t border-blue-500/10 flex flex-wrap gap-1.5 font-semibold';
+                    cardDesc.parentElement.appendChild(wordFormsEl);
+                }
+            }
+            if (wordFormsEl) {
+                const forms = cache.wordForms || [];
+                if (forms.length > 0) {
+                    wordFormsEl.innerHTML = forms.map(f => `<span class="bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/15">${escapeHtml(f)}</span>`).join('');
+                    wordFormsEl.classList.remove('hidden');
+                } else {
+                    wordFormsEl.classList.add('hidden');
+                }
+            }
+
+            // 5. Etymology (词根词源)
+            if (cache.youdaoEtym) {
+                const etymContent = el.etymologyContent || document.getElementById('etymologyContent');
+                if (etymContent) {
+                    etymContent.innerHTML = `
+                        <div class="p-2 bg-violet-500/5 dark:bg-violet-500/10 rounded-xl border border-violet-500/15 space-y-1">
+                            <div class="flex justify-between items-center text-[9px] font-bold text-violet-600 dark:text-violet-400">
+                                <span>🌱 词根构词 & 词源解析</span>
+                                <span class="text-[8px] opacity-70">Youdao Etymology</span>
+                            </div>
+                            <p class="text-[10px] text-gray-800 dark:text-gray-200 leading-relaxed font-medium select-text">${escapeHtml(cache.youdaoEtym)}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            // 6. Collocations (地道短语 & 高频搭配)
+            const collocContainer = document.getElementById('cardCollocations');
+            if (collocContainer) {
+                const presetCols = getPresetCollocations(lowerWord, posLabel);
+                const apiCols = cache.collocations || [];
+                const combined = [];
+                const seen = new Set();
+
+                presetCols.forEach(item => {
+                    const parts = item.split(/\s*\((.*?)\)/);
+                    const phrase = (parts[0] || item).trim();
+                    const note = parts[1] ? `(${parts[1]})` : '';
+                    if (!seen.has(phrase.toLowerCase())) {
+                        seen.add(phrase.toLowerCase());
+                        combined.push({ phrase, note, tag: '高频搭配' });
+                    }
+                });
+
+                apiCols.forEach(col => {
+                    if (!seen.has(col.phrase.toLowerCase())) {
+                        seen.add(col.phrase.toLowerCase());
+                        combined.push({ phrase: col.phrase, note: col.note || '', tag: '有道短语' });
+                    }
+                });
+
+                if (combined.length > 0) {
+                    collocContainer.innerHTML = combined.slice(0, 6).map(item => `
+                        <div class="p-1.5 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-lg border border-indigo-500/10 flex items-center justify-between text-[9.5px]">
+                            <span class="font-bold text-indigo-950 dark:text-indigo-200">${escapeHtml(item.phrase)}</span>
+                            <span class="text-indigo-600 dark:text-indigo-400 font-medium">${escapeHtml(item.note)}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    collocContainer.innerHTML = `<div class="text-[9px] text-gray-400 italic p-1 flex items-center gap-1"><span class="animate-pulse">⚡ API 实时解析搭配中...</span></div>`;
+                }
+            }
+
+            // 7. Synonyms, Antonyms & Derivatives (同近反义词 & 派生词)
+            const synContainer = document.getElementById('cardSynonyms');
+            if (synContainer) {
+                const presetSyns = getPresetSynonyms(lowerWord);
+                const apiSyns = cache.synonyms || [];
+                const apiAnts = cache.antonyms || [];
+                const apiDerivs = cache.derivatives || [];
+
+                const combinedSyns = Array.from(new Set([...presetSyns.map(s => s.split(' ')[0]), ...apiSyns])).filter(Boolean);
+
+                let synHtml = "";
+                if (combinedSyns.length > 0) {
+                    synHtml += `
+                        <div class="w-full mb-1">
+                            <span class="text-[8.5px] font-bold text-purple-600 dark:text-purple-400 block mb-0.5">同近义词:</span>
+                            <div class="flex flex-wrap gap-1">
+                                ${combinedSyns.slice(0, 8).map(item => `
+                                    <span class="bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded-md text-[9px] font-medium">
+                                        ${escapeHtml(item)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (apiDerivs.length > 0) {
+                    synHtml += `
+                        <div class="w-full mt-1.5 pt-1 border-t border-purple-500/10">
+                            <span class="text-[8.5px] font-bold text-emerald-600 dark:text-emerald-400 block mb-0.5">派生词 / 同根词:</span>
+                            <div class="flex flex-wrap gap-1">
+                                ${apiDerivs.slice(0, 4).map(item => `
+                                    <span class="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded-md text-[9px] font-medium">
+                                        ${escapeHtml(item)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (apiAnts.length > 0) {
+                    synHtml += `
+                        <div class="w-full mt-1.5 pt-1 border-t border-purple-500/10">
+                            <span class="text-[8.5px] font-bold text-rose-600 dark:text-rose-400 block mb-0.5">反义词:</span>
+                            <div class="flex flex-wrap gap-1">
+                                ${apiAnts.slice(0, 5).map(item => `
+                                    <span class="bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 px-2 py-0.5 rounded-md text-[9px] font-medium">
+                                        ${escapeHtml(item)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (!synHtml) {
+                    synHtml = `<div class="text-[9px] text-gray-400 italic p-1 flex items-center gap-1"><span class="animate-pulse">⚡ API 提取近反义词中...</span></div>`;
+                }
+
+                synContainer.innerHTML = synHtml;
+            }
+
+            // 8. Exam Sentences (分级/按词性权威双语例句)
+            const sentenceContainer = document.getElementById('cardSentenceContainer');
+            if (sentenceContainer) {
+                const apiSentences = cache.sentences || [];
+                if (apiSentences.length > 0) {
+                    sentenceContainer.innerHTML = apiSentences.slice(0, 3).map(s => `
+                        <div class="p-2 bg-amber-500/5 dark:bg-amber-500/10 rounded-xl border border-amber-500/15 space-y-1 mb-1.5 last:mb-0">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[8.5px] font-bold px-1.5 py-0.2 rounded ${s.posBg || 'bg-amber-500/20 text-amber-700 dark:text-amber-300'}">
+                                    ${escapeHtml(s.posLabel || '双语真题')}
+                                </span>
+                                <span class="text-[8px] text-amber-700/80 dark:text-amber-300/80 font-bold">${escapeHtml(s.source || '有道真题例句')}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-800 dark:text-gray-100 font-medium italic leading-relaxed select-text">"${escapeHtml(s.en)}"</p>
+                            <p class="text-[9.5px] text-gray-600 dark:text-gray-300 leading-tight border-t border-amber-500/10 pt-1">${escapeHtml(s.zh)}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    const sentenceData = getPresetExamSentence(lowerWord, descStr);
+                    const firstPOS = posList[0]?.label || '例句';
+                    sentenceContainer.innerHTML = `
+                        <div class="p-2 bg-amber-500/5 dark:bg-amber-500/10 rounded-xl border border-amber-500/15 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[8.5px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                    ${escapeHtml(firstPOS)}
+                                </span>
+                                <span class="text-[8px] text-amber-700 dark:text-amber-300 font-bold">${escapeHtml(sentenceData.source)}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-800 dark:text-gray-100 font-medium italic leading-relaxed select-text">"${escapeHtml(sentenceData.en)}"</p>
+                            <p class="text-[9.5px] text-gray-600 dark:text-gray-300 leading-tight border-t border-amber-500/10 pt-1">${escapeHtml(sentenceData.zh)}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        async function fetchDynamicWordDetails(word, descStr = "", posLabel = "") {
+            if (!word) return;
+            const cleanWord = word.trim().toLowerCase();
+
+            // Skip if already fully cached
+            if (state.wordDetailsCache[cleanWord] && state.wordDetailsCache[cleanWord].isFetched) {
+                return;
+            }
+
+            // Deduplicate concurrent in-flight requests for the same word
+            if (state.inFlightFetches.has(cleanWord)) {
+                return state.inFlightFetches.get(cleanWord);
+            }
+
+            const isCurrentWord = () => {
+                const curr = getCurrentWordObject();
+                return curr && curr.word.trim().toLowerCase() === cleanWord;
+            };
+
+            const fetchPromise = (async () => {
+                try {
+                // Fetch Youdao API, Datamuse API & DictionaryAPI in parallel
+                const [youdaoRes, bgaRes, bgbRes, jjaRes, jjbRes, synRes, antRes, dictRes] = await Promise.all([
+                    fetchYoudaoData(cleanWord),
+                    fetch(`https://api.datamuse.com/words?rel_bga=${encodeURIComponent(cleanWord)}&max=12`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`https://api.datamuse.com/words?rel_bgb=${encodeURIComponent(cleanWord)}&max=12`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`https://api.datamuse.com/words?rel_jja=${encodeURIComponent(cleanWord)}&max=10`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`https://api.datamuse.com/words?rel_jjb=${encodeURIComponent(cleanWord)}&max=10`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(cleanWord)}&max=8`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`https://api.datamuse.com/words?rel_ant=${encodeURIComponent(cleanWord)}&max=6`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`).then(r => r.ok ? r.json() : null).catch(() => null)
+                ]);
+
+                // Extract all POS
+                const posList = parsePOSFromTextAndDict(descStr, dictRes);
+
+                // 1. Youdao Exam Tags
+                let examTags = [];
+                if (youdaoRes && youdaoRes.ec && Array.isArray(youdaoRes.ec.exam_type)) {
+                    examTags = youdaoRes.ec.exam_type.filter(Boolean);
+                }
+
+                // 2. Youdao Phonetics & Speech
+                let phoneticUk = "", phoneticUs = "";
+                let audioSpeechUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&type=2`;
+                if (youdaoRes && youdaoRes.ec && youdaoRes.ec.word && youdaoRes.ec.word[0]) {
+                    const w0 = youdaoRes.ec.word[0];
+                    if (w0.usphone) phoneticUs = `美 /${w0.usphone}/`;
+                    if (w0.ukphone) phoneticUk = `英 /${w0.ukphone}/`;
+                }
+
+                // 3. Youdao Word Forms (e.g. 复数: families)
+                let wordForms = [];
+                if (youdaoRes && youdaoRes.ec && youdaoRes.ec.word && youdaoRes.ec.word[0] && Array.isArray(youdaoRes.ec.word[0].wfs)) {
+                    youdaoRes.ec.word[0].wfs.forEach(wfItem => {
+                        if (wfItem.wf && wfItem.wf.name && wfItem.wf.value) {
+                            wordForms.push(`${wfItem.wf.name}: ${wfItem.wf.value}`);
+                        }
+                    });
+                }
+
+                // 4. Youdao Etymology / 词根
+                let youdaoEtym = "";
+                if (youdaoRes && youdaoRes.etym && youdaoRes.etym.etyms && Array.isArray(youdaoRes.etym.etyms.zh) && youdaoRes.etym.etyms.zh[0]) {
+                    const etObj = youdaoRes.etym.etyms.zh[0];
+                    if (etObj.value) {
+                        youdaoEtym = etObj.value.replace(/<[^>]+>/g, '').trim();
+                    }
+                }
+
+                // 5. Process Collocations
+                const colSet = new Set();
+                const colList = [];
+
+                // Add Youdao Phrases
+                if (youdaoRes && youdaoRes.phrs && Array.isArray(youdaoRes.phrs.phrs)) {
+                    youdaoRes.phrs.phrs.forEach(pObj => {
+                        if (pObj.phr && pObj.phr.headword && pObj.phr.headword.l && pObj.phr.headword.l.i) {
+                            const phr = pObj.phr.headword.l.i.trim();
+                            let tr = "";
+                            if (pObj.phr.trs && pObj.phr.trs[0] && pObj.phr.trs[0].tr && pObj.phr.trs[0].tr.l && pObj.phr.trs[0].tr.l.i) {
+                                tr = pObj.phr.trs[0].tr.l.i.trim();
+                            }
+                            if (phr && !colSet.has(phr.toLowerCase())) {
+                                colSet.add(phr.toLowerCase());
+                                colList.push({ phrase: phr, note: tr ? `(${tr})` : '(有道短语)' });
+                            }
+                        }
+                    });
+                }
+
+                const stopwords = new Set(['a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'of', 'and', 'or', 'to', 'in', 'that', 'it', 'this', 'by', 'from', 'as', 'at', 'if', 'than', 'so', 'no', 'not']);
+                const colTranslate = {
+                    'family member': '家庭成员', 'family members': '家庭成员', 'family business': '家族企业', 'family life': '家庭生活', 'family doctor': '家庭医生', 'family tree': '家谱', 'family planning': '计划生育', 'family background': '家庭背景', 'family values': '家庭价值观', 'family reunion': '家庭团聚', 'family name': '姓氏', 'family law': '婚姻家庭法',
+                    'whole family': '全家人', 'entire family': '整个家庭', 'nuclear family': '核心家庭', 'royal family': '王室', 'extended family': '大家庭', 'immediate family': '直系亲属', 'single-parent family': '单亲家庭',
+                    'meet needs': '满足需求', 'meet demand': '满足需求', 'meet requirements': '符合要求', 'meet expectations': '达到预期', 'meet goals': '达成目标', 'meet deadlines': '赶上截止日期', 'meet standards': '符合标准', 'meet with': '与...会面'
+                };
+
+                const addCol = (phrase, typeTag = '高频词组') => {
+                    const cleanPhrase = phrase.toLowerCase().trim();
+                    if (colSet.has(cleanPhrase)) return;
+                    const parts = cleanPhrase.split(/\s+/);
+                    if (parts.length !== 2) return;
+                    const [w1, w2] = parts;
+                    if (stopwords.has(w1) || stopwords.has(w2)) return;
+                    if (w1.length <= 1 || w2.length <= 1) return;
+                    if (!/^[a-z]+$/i.test(w1) || !/^[a-z]+$/i.test(w2)) return;
+
+                    colSet.add(cleanPhrase);
+                    const note = colTranslate[cleanPhrase] ? `(${colTranslate[cleanPhrase]})` : `(${typeTag})`;
+                    colList.push({ phrase, note });
+                };
+
+                if (Array.isArray(bgaRes)) bgaRes.forEach(item => { if (item.word) addCol(`${cleanWord} ${item.word}`, '常用后置'); });
+                if (Array.isArray(bgbRes)) bgbRes.forEach(item => { if (item.word) addCol(`${item.word} ${cleanWord}`, '常用前置'); });
+                if (Array.isArray(jjaRes)) jjaRes.forEach(item => { if (item.word) addCol(`${item.word} ${cleanWord}`, '修饰词'); });
+                if (Array.isArray(jjbRes)) jjbRes.forEach(item => { if (item.word) addCol(`${cleanWord} ${item.word}`, '修饰名词'); });
+
+                // 6. Process Synonyms, Antonyms, Derivatives
+                const synSet = new Set();
+                const synonymsList = [];
+                const antSet = new Set();
+                const antonymsList = [];
+                const derivativesList = [];
+
+                // Youdao Synonyms
+                if (youdaoRes && youdaoRes.syno && Array.isArray(youdaoRes.syno.synos)) {
+                    youdaoRes.syno.synos.forEach(sObj => {
+                        const pos = sObj.syno?.pos || '';
+                        if (Array.isArray(sObj.syno?.ws)) {
+                            sObj.syno.ws.forEach(w => {
+                                if (w.w && w.w.toLowerCase() !== cleanWord && !synSet.has(w.w.toLowerCase())) {
+                                    synSet.add(w.w.toLowerCase());
+                                    synonymsList.push(`${w.w} ${pos ? '('+pos+')' : ''}`);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Youdao Related Words / Derivatives
+                if (youdaoRes && youdaoRes.rel_word && Array.isArray(youdaoRes.rel_word.rels)) {
+                    youdaoRes.rel_word.rels.forEach(rObj => {
+                        const pos = rObj.rel?.pos || '';
+                        if (Array.isArray(rObj.rel?.words)) {
+                            rObj.rel.words.forEach(wObj => {
+                                if (wObj.word && wObj.word.toLowerCase() !== cleanWord) {
+                                    derivativesList.push(`${wObj.word} [${pos}] ${wObj.tran || ''}`);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Datamuse Synonyms / Antonyms
+                if (Array.isArray(synRes)) {
+                    synRes.forEach(s => {
+                        if (s.word && s.word !== cleanWord && !synSet.has(s.word.toLowerCase())) {
+                            synSet.add(s.word.toLowerCase());
+                            synonymsList.push(s.word);
+                        }
+                    });
+                }
+                if (Array.isArray(antRes)) {
+                    antRes.forEach(a => {
+                        if (a.word && a.word !== cleanWord && !antSet.has(a.word.toLowerCase())) {
+                            antSet.add(a.word.toLowerCase());
+                            antonymsList.push(a.word);
+                        }
+                    });
+                }
+
+                // 7. Process Sentences
+                const sentencesList = [];
+
+                // Youdao Bilingual Sentences
+                if (youdaoRes && youdaoRes.blng_sents_part && Array.isArray(youdaoRes.blng_sents_part['sentence-pair'])) {
+                    youdaoRes.blng_sents_part['sentence-pair'].forEach(sp => {
+                        const en = (sp.sentence || sp['sentence-eng'] || '').replace(/<[^>]+>/g, '').trim();
+                        const zh = (sp['sentence-translation'] || '').trim();
+                        const src = sp.source || '有道真题例句';
+                        if (en && zh) {
+                            sentencesList.push({ en, zh, source: src, posLabel: '双语真题' });
+                        }
+                    });
+                }
+
+                // Youdao Authentic Sentences
+                if (youdaoRes && youdaoRes.auth_sents_part && Array.isArray(youdaoRes.auth_sents_part.sent)) {
+                    youdaoRes.auth_sents_part.sent.forEach(st => {
+                        const en = (st.foreign || '').replace(/<[^>]+>/g, '').trim();
+                        const src = st.source || '权威外刊例句';
+                        if (en) {
+                            sentencesList.push({ en, zh: '【权威原声例句】', source: src, posLabel: '外刊原声' });
+                        }
+                    });
+                }
+
+                // DictionaryAPI fallback
+                if (Array.isArray(dictRes) && dictRes[0] && dictRes[0].meanings) {
+                    dictRes[0].meanings.forEach(m => {
+                        const rawPos = (m.partOfSpeech || '').toLowerCase();
+                        const matchingPOS = posList.find(p => p.code.toLowerCase().startsWith(rawPos.slice(0, 1))) || posList[0] || { label: `${rawPos}.`, bg: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20' };
+
+                        if (m.definitions) {
+                            m.definitions.forEach(def => {
+                                if (def.example && def.example.trim()) {
+                                    sentencesList.push({
+                                        en: def.example.trim(),
+                                        zh: def.definition ? `[${matchingPOS.label}] 语境含义: ${def.definition}` : `[${matchingPOS.label}] 权威例句`,
+                                        posLabel: matchingPOS.label,
+                                        posBg: matchingPOS.bg,
+                                        source: 'API 语料例句'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Save to Cache with LRU bound
+                setWordDetailsCache(cleanWord, {
+                    collocations: colList.slice(0, 8),
+                    synonyms: synonymsList.slice(0, 8),
+                    antonyms: antonymsList.slice(0, 6),
+                    derivatives: derivativesList.slice(0, 6),
+                    sentences: sentencesList.slice(0, 5),
+                    posList: posList,
+                    examTags: examTags,
+                    wordForms: wordForms,
+                    phoneticUk: phoneticUk,
+                    phoneticUs: phoneticUs,
+                    youdaoEtym: youdaoEtym,
+                    audioSpeechUrl: audioSpeechUrl,
+                    isFetched: true
+                });
+
+                // Update UI live if current word
+                if (isCurrentWord()) {
+                    updateCardDetailsFromCache(cleanWord, descStr, posLabel);
+                }
+            } catch (err) {
+                console.warn('API extraction error:', err);
+            } finally {
+                state.inFlightFetches.delete(cleanWord);
+            }
+            })();
+
+            state.inFlightFetches.set(cleanWord, fetchPromise);
+            return fetchPromise;
+        }
+
+        function fetchWiktionaryEtymology(word) {
+            const cleanWord = word.trim().toLowerCase();
+            fetch(`https://en.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(cleanWord)}&format=json&origin=*`)
+                .then(r => r.json())
+                .then(data => {
+                    let wikText = "";
+                    if (data && data.query && data.query.pages) {
+                        const pages = data.query.pages;
+                        for (const pid in pages) {
+                            if (pages[pid].extract) {
+                                wikText = pages[pid].extract;
+                                break;
+                            }
+                        }
+                    }
+                    const etymText = parseWiktionaryEtymology(wikText, cleanWord);
+                    const morphHtml = getMorphologicalBreakdownHtml(word);
+                    let html = morphHtml;
+                    if (etymText) {
+                        html += `
+                            <div class="mt-1.5 pt-1.5 border-t border-violet-500/15">
+                                <div class="font-bold text-[10px] text-violet-700 dark:text-violet-300 mb-0.5 flex items-center gap-1">
+                                    <span>📜 历史演变 (Etymology):</span>
+                                </div>
+                                <p class="text-[9.5px] text-gray-700 dark:text-gray-200 leading-normal select-text">${escapeHtml(etymText)}</p>
+                            </div>
+                        `;
+                    }
+                    if (!state.etymologyCache) state.etymologyCache = {};
+                    state.etymologyCache[cleanWord] = html;
+
+                    const currentObj = getCurrentWordObject();
+                    if (currentObj && currentObj.word.trim().toLowerCase() === cleanWord) {
+                        const content = el.etymologyContent || document.getElementById('etymologyContent');
+                        if (content) content.innerHTML = html;
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function setupCardDetailTabs() {
+            const cardSpeakBtn = document.getElementById('cardSpeakBtn');
+            if (cardSpeakBtn) {
+                cardSpeakBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    speakWord();
+                });
+            }
+
+            const tabs = [
+                { btnId: 'tabCardRoot', panelId: 'panelCardRoot', color: 'bg-violet-500 text-white' },
+                { btnId: 'tabCardColloc', panelId: 'panelCardColloc', color: 'bg-indigo-500 text-white' },
+                { btnId: 'tabCardSynonym', panelId: 'panelCardSynonym', color: 'bg-purple-500 text-white' },
+                { btnId: 'tabCardSentence', panelId: 'panelCardSentence', color: 'bg-amber-500 text-white' }
+            ];
+
+            tabs.forEach(t => {
+                const btn = document.getElementById(t.btnId);
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        tabs.forEach(other => {
+                            const otherBtn = document.getElementById(other.btnId);
+                            const otherPanel = document.getElementById(other.panelId);
+                            if (otherBtn) {
+                                otherBtn.className = "card-detail-tab flex-1 py-1 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all text-center font-bold";
+                            }
+                            if (otherPanel) otherPanel.classList.add('hidden');
+                        });
+                        btn.className = `card-detail-tab flex-1 py-1 rounded-lg ${t.color} shadow-xs transition-all text-center font-bold`;
+                        const targetPanel = document.getElementById(t.panelId);
+                        if (targetPanel) targetPanel.classList.remove('hidden');
+                    });
+                }
+            });
+        }
+
+        function toggleEtymology(e) {
+            if (e) e.stopPropagation();
+            const wordObj = getCurrentWordObject();
+            if (!wordObj || !wordObj.word) return;
+            
+            const word = wordObj.word.trim();
+            const cleanWord = word.toLowerCase();
+            
+            const container = el.etymologyContainer || document.getElementById('etymologyContainer');
+            const content = el.etymologyContent || document.getElementById('etymologyContent');
+            const btn = el.etymologyBtn || document.getElementById('etymologyBtn');
+            
+            if (!container || !content) return;
+            
+            if (!container.classList.contains('hidden')) {
+                container.classList.add('hidden');
+                if (btn) btn.innerHTML = `<span>🌱 词源解析</span>`;
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            if (btn) btn.innerHTML = `<span>🌱 收起词源</span>`;
+            
+            if (state.etymologyCache && state.etymologyCache[cleanWord]) {
+                content.innerHTML = state.etymologyCache[cleanWord];
+                return;
+            }
+            
+            const morphHtml = getMorphologicalBreakdownHtml(word);
+            
+            content.innerHTML = `
+                ${morphHtml}
+                <div class="flex items-center gap-1.5 text-violet-600 dark:text-violet-400 font-medium my-1">
+                    <span class="animate-spin text-xs">⏳</span> 正在检索文献词源...
+                </div>
+            `;
+            
+            fetch(`https://en.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=${encodeURIComponent(cleanWord)}&format=json&origin=*`)
+                .then(r => r.json())
+                .then(data => {
+                    let wikText = "";
+                    if (data && data.query && data.query.pages) {
+                        const pages = data.query.pages;
+                        for (const pid in pages) {
+                            if (pages[pid].extract) {
+                                wikText = pages[pid].extract;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    const etymText = parseWiktionaryEtymology(wikText, cleanWord);
+                    
+                    let html = morphHtml;
+                    if (etymText) {
+                        html += `
+                            <div class="mt-1.5 pt-1.5 border-t border-violet-500/15">
+                                <div class="font-bold text-[10px] text-violet-700 dark:text-violet-300 mb-0.5 flex items-center gap-1">
+                                    <span>📜 历史演变 (Etymology):</span>
+                                </div>
+                                <p class="text-[9.5px] text-gray-700 dark:text-gray-200 leading-normal select-text">${escapeHtml(etymText)}</p>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="mt-1.5 pt-1 border-t border-violet-500/15 text-[9px] text-gray-500 dark:text-gray-400 italic">
+                                💡 结合上方词根词缀剖析记忆更高效！
+                            </div>
+                        `;
+                    }
+                    
+                    if (!state.etymologyCache) state.etymologyCache = {};
+                    state.etymologyCache[cleanWord] = html;
+                    
+                    const currentObj = getCurrentWordObject();
+                    if (currentObj && currentObj.word.trim().toLowerCase() === cleanWord) {
+                        content.innerHTML = html;
+                    }
+                })
+                .catch(err => {
+                    let html = morphHtml;
+                    html += `
+                        <div class="mt-1 pt-1 border-t border-violet-500/15 text-[9px] text-gray-500 dark:text-gray-400">
+                            💡 已提供词根词缀剖析
+                        </div>
+                    `;
+                    if (!state.etymologyCache) state.etymologyCache = {};
+                    state.etymologyCache[cleanWord] = html;
+                    content.innerHTML = html;
+                });
         }
 
         function fetchNetworkImage(word) {
@@ -1786,9 +3023,37 @@
                 });
             });
 
-            // Search input filtering
+            // Event Delegation for Unit List item selection
+            const courseUnitListContainer = document.getElementById('courseUnitList');
+            if (courseUnitListContainer) {
+                courseUnitListContainer.addEventListener('click', (e) => {
+                    const item = e.target.closest('.course-unit-item');
+                    if (!item) return;
+                    const unitValue = item.getAttribute('data-unit-value');
+                    const groupValue = item.getAttribute('data-unit-group');
+                    
+                    if (el.groupSelector) {
+                        el.groupSelector.value = groupValue;
+                        saveStorageDebounced('spell_saved_group', groupValue);
+                    }
+                    if (el.unitSelector) {
+                        const unitsForGroup = CONFIG.COURSE_DATA[groupValue] || [];
+                        el.unitSelector.innerHTML = unitsForGroup.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
+                        el.unitSelector.value = unitValue;
+                    }
+
+                    onUnitChange();
+                    
+                    if (modal) modal.classList.add('hidden');
+                    showToast("📖 成功载入新单元！");
+                });
+            }
+
+            // Search input filtering with 150ms debounce
             const searchInp = document.getElementById('courseSearchInput');
             const clearSearchBtn = document.getElementById('clearCourseSearchBtn');
+            const debouncedRenderUnits = debounce(renderCourseUnitsList, 150);
+
             if (searchInp) {
                 searchInp.addEventListener('input', (e) => {
                     courseSearchQuery = e.target.value.trim().toLowerCase();
@@ -1799,7 +3064,7 @@
                             clearSearchBtn.classList.add('hidden');
                         }
                     }
-                    renderCourseUnitsList();
+                    debouncedRenderUnits();
                 });
             }
 
@@ -1892,21 +3157,29 @@
 
             const currentActiveUnitValue = el.unitSelector ? el.unitSelector.value : '';
 
+            // Optimization: Batch pre-read unit progress from localStorage into a local map
+            const progressMap = {};
+            filteredUnits.forEach(u => {
+                progressMap[u.value] = {
+                    savedIndex: localStorage.getItem('spell_saved_index_' + u.value),
+                    totalWords: localStorage.getItem('spell_total_words_' + u.value)
+                };
+            });
+
             container.innerHTML = filteredUnits.map(u => {
                 const isCurrent = u.value === currentActiveUnitValue;
                 let progressDesc = '未开始';
-                const savedIndex = localStorage.getItem('spell_saved_index_' + u.value);
-                const totalWords = localStorage.getItem('spell_total_words_' + u.value);
+                const pInfo = progressMap[u.value];
                 
                 if (isCurrent && state.wordBank?.length > 0) {
                     const pct = state.wordBank.length ? Math.round((state.currentIndex / state.wordBank.length) * 100) : 0;
                     progressDesc = `学习中: 已学至第 ${state.currentIndex + 1}/${state.wordBank.length} 词 (${pct}%)`;
-                } else if (savedIndex !== null) {
-                    if (totalWords !== null) {
-                        const pct = Math.round((parseInt(savedIndex) / parseInt(totalWords)) * 100);
-                        progressDesc = `已学习至第 ${parseInt(savedIndex) + 1}/${totalWords} 词 (${pct}%)`;
+                } else if (pInfo && pInfo.savedIndex !== null) {
+                    if (pInfo.totalWords !== null) {
+                        const pct = Math.round((parseInt(pInfo.savedIndex) / parseInt(pInfo.totalWords)) * 100);
+                        progressDesc = `已学习至第 ${parseInt(pInfo.savedIndex) + 1}/${pInfo.totalWords} 词 (${pct}%)`;
                     } else {
-                        progressDesc = `已学习至第 ${parseInt(savedIndex) + 1} 词`;
+                        progressDesc = `已学习至第 ${parseInt(pInfo.savedIndex) + 1} 词`;
                     }
                 }
 
@@ -1933,31 +3206,6 @@
                     </div>
                 `;
             }).join('');
-
-            const items = container.querySelectorAll('.course-unit-item');
-            items.forEach(item => {
-                item.addEventListener('click', () => {
-                    const unitValue = item.getAttribute('data-unit-value');
-                    const groupValue = item.getAttribute('data-unit-group');
-                    
-                    if (el.groupSelector) {
-                        el.groupSelector.value = groupValue;
-                        localStorage.setItem('spell_saved_group', groupValue);
-                    }
-                    if (el.unitSelector) {
-                        const unitsForGroup = CONFIG.COURSE_DATA[groupValue] || [];
-                        el.unitSelector.innerHTML = unitsForGroup.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
-                        el.unitSelector.value = unitValue;
-                    }
-
-                    onUnitChange();
-                    
-                    const modal = document.getElementById('courseSelectionModal');
-                    if (modal) modal.classList.add('hidden');
-
-                    showToast("📖 成功载入新单元！");
-                });
-            });
         }
 
         function toggleHint() { 
@@ -1968,6 +3216,10 @@
         function flipToBack() { 
             state.side = 'back'; 
             el.cardInner.classList.add('is-flipped'); 
+            const wordObj = getCurrentWordObject();
+            if (wordObj && wordObj.word) {
+                renderCardBackDetails(wordObj);
+            }
             speakWord(); 
         }
         
@@ -2136,7 +3388,7 @@
         }
 
         function saveWizardState() {
-            localStorage.setItem('spellquest_wizard', JSON.stringify(state.wizard));
+            saveStorageDebounced('spellquest_wizard', state.wizard);
         }
 
         function updateWizardUI() {
@@ -2180,8 +3432,15 @@
                 unlockedBadgeLabel.textContent = `已解锁: ${unlockedCount}/${MAGIC_BADGES.length}`;
             }
 
-            renderBadges();
-            renderStudyIntensityChart();
+            // Performance Optimization: Defer expensive D3 chart & Badge DOM generation
+            // only when the Wizard modal is actually visible!
+            state.wizardUiDirty = true;
+            const sanctuaryModal = document.getElementById('wizardSanctuaryModal');
+            if (sanctuaryModal && !sanctuaryModal.classList.contains('hidden')) {
+                renderBadges();
+                requestAnimationFrame(renderStudyIntensityChart);
+                state.wizardUiDirty = false;
+            }
         }
 
         function getLast7Days() {
@@ -2200,6 +3459,9 @@
         }
 
         function renderStudyIntensityChart() {
+            const chartParent = document.getElementById("studyIntensityChart");
+            if (!chartParent || chartParent.offsetWidth === 0 || chartParent.offsetHeight === 0) return;
+
             const container = d3.select("#studyIntensityChart");
             if (container.empty()) return;
             
