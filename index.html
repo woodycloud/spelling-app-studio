@@ -38,6 +38,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+    <script src="/grammar-quiz-bank.js"></script>
     
     <style>
         * {
@@ -762,7 +763,7 @@
                             <span class="text-xs font-black text-gray-800 dark:text-white">正确答对可获得 +15 EXP 与 魔法星！</span>
                         </div>
                         <div class="text-right">
-                            <span id="grammarScoreBadge" class="text-xs font-black text-amber-500 bg-amber-500/15 px-2 py-1 rounded-lg border border-amber-500/20">已答: 0/29</span>
+                            <span id="grammarScoreBadge" class="text-xs font-black text-amber-500 bg-amber-500/15 px-2 py-1 rounded-lg border border-amber-500/20">已答: 0/210</span>
                         </div>
                     </div>
 
@@ -5004,7 +5005,7 @@
             }
         ];
 
-        const GRAMMAR_QUIZ = [
+        const GRAMMAR_QUIZ_LEGACY = [
             // 1. 八大词性全景图 (parts_of_speech)
             {
                 id: 'q_pos_1',
@@ -5303,6 +5304,8 @@
                 explanation: '现在分词 Hearing 引导时间状语从句，主语 students 与 hear 是主动关系。'
             }
         ];
+
+        const GRAMMAR_QUIZ = (typeof window !== 'undefined' && window.GRAMMAR_QUIZ_BANK && window.GRAMMAR_QUIZ_BANK.length > 0) ? window.GRAMMAR_QUIZ_BANK : GRAMMAR_QUIZ_LEGACY;
 
         const grammarState = {
             currentTab: 'lessons',
