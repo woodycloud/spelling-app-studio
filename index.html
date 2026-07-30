@@ -507,12 +507,15 @@
         </div>
         
         <!-- Reinforcement Training Hub -->
-        <div id="trainingHub" class="w-full mb-1 flex-shrink-0 grid grid-cols-2 gap-2">
-            <button id="reviewWrongBtn" class="bg-gradient-to-r from-red-500/10 to-orange-500/10 dark:from-red-500/15 dark:to-orange-500/15 border border-red-500/20 text-[#ff453a] dark:text-[#ff6961] py-2.5 rounded-xl font-bold text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-sm">
+        <div id="trainingHub" class="w-full mb-1 flex-shrink-0 grid grid-cols-3 gap-1.5">
+            <button id="reviewWrongBtn" class="bg-gradient-to-r from-red-500/10 to-orange-500/10 dark:from-red-500/15 dark:to-orange-500/15 border border-red-500/20 text-[#ff453a] dark:text-[#ff6961] py-2 rounded-xl font-bold text-[10px] flex items-center justify-center gap-0.5 active:scale-95 transition-all shadow-xs">
                 🔥 错词攻坚 <span id="wrongCount" class="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full leading-none ml-0.5">0</span>
             </button>
-            <button id="reviewVocabBtn" class="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 dark:from-amber-500/15 dark:to-yellow-500/15 border border-amber-500/20 text-[#ff9f0a] dark:text-[#ffb340] py-2.5 rounded-xl font-bold text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-sm">
+            <button id="reviewVocabBtn" class="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 dark:from-amber-500/15 dark:to-yellow-500/15 border border-amber-500/20 text-[#ff9f0a] dark:text-[#ffb340] py-2 rounded-xl font-bold text-[10px] flex items-center justify-center gap-0.5 active:scale-95 transition-all shadow-xs">
                 📖 生词强化 <span id="vocabCount" class="bg-[#ff9f0a] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full leading-none ml-0.5">0</span>
+            </button>
+            <button id="openGrammarModalBtn" class="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/15 dark:to-purple-500/15 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 py-2 rounded-xl font-bold text-[10px] flex items-center justify-center gap-0.5 active:scale-95 transition-all shadow-xs">
+                🎓 语法学习
             </button>
         </div>
 
@@ -701,6 +704,165 @@
                     <span>🔄</span> 重置当前进度
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Grammar Learning Module (iOS Modal Style) -->
+    <div id="grammarLearningModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/85 backdrop-blur-md hidden p-3 overflow-y-auto animate-fade-in">
+        <div class="bg-[#f2f2f7] dark:bg-[#1c1c1e] border border-black/10 dark:border-white/10 rounded-[32px] w-full max-w-sm text-center shadow-2xl relative overflow-hidden flex flex-col h-[88vh] max-h-[680px] my-auto animate-scale-up">
+            
+            <!-- Drag handle -->
+            <div class="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-2.5 mb-1.5 flex-shrink-0"></div>
+            
+            <!-- Close Button -->
+            <button id="closeGrammarModalBtn" class="absolute top-3.5 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white bg-black/5 dark:bg-white/10 active:scale-90 w-9 h-9 flex items-center justify-center rounded-full transition-all text-sm font-bold z-50">✕</button>
+
+            <!-- Header -->
+            <div class="relative z-10 flex flex-col items-center px-4 pb-2">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-base">🎓</span>
+                    <h2 class="text-sm font-black text-gray-900 dark:text-white">魔法语法特训营</h2>
+                </div>
+                <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium">系统语法知识 · 互动诊断 · 魔法练习</p>
+            </div>
+
+            <!-- Top Sub-Nav Tabs -->
+            <div class="px-4 mb-2 flex-shrink-0">
+                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-xl h-[32px] items-center text-[9px] font-bold">
+                    <button data-grammar-tab="lessons" class="grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-[#2c2c2e] shadow-sm">📚 语法树</button>
+                    <button data-grammar-tab="quiz" class="grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-gray-400 dark:text-gray-500">✏️ 语法诊所</button>
+                    <button data-grammar-tab="analyzer" class="grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-gray-400 dark:text-gray-500">🔍 句子分析</button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto px-4 pb-4 space-y-3 text-left">
+                
+                <!-- Tab 1: Lessons & Rules -->
+                <div id="grammarTabLessons" class="grammar-tab-panel space-y-2.5">
+                    <!-- Filter Pill Bar for Difficulty -->
+                    <div class="flex items-center gap-1 text-[8px] font-bold">
+                        <button data-level-filter="all" class="grammar-level-btn px-2 py-0.5 rounded-full bg-indigo-500 text-white shadow-xs">全部级</button>
+                        <button data-level-filter="初级基础" class="grammar-level-btn px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-gray-500 dark:text-gray-400">🟢 初级</button>
+                        <button data-level-filter="中级进阶" class="grammar-level-btn px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-gray-500 dark:text-gray-400">🟡 中级</button>
+                        <button data-level-filter="高级精通" class="grammar-level-btn px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-gray-500 dark:text-gray-400">🔴 高级</button>
+                    </div>
+
+                    <!-- Grammar Topics List -->
+                    <div id="grammarTopicsList" class="space-y-2">
+                        <!-- Dynamic render -->
+                    </div>
+                </div>
+
+                <!-- Tab 2: Interactive Quiz Clinic -->
+                <div id="grammarTabQuiz" class="grammar-tab-panel space-y-3 hidden">
+                    <div class="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-500/20 dark:to-pink-500/20 border border-indigo-500/20 p-3 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <span class="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">✨ 魔法答题领魔力</span>
+                            <span class="text-xs font-black text-gray-800 dark:text-white">正确答对可获得 +15 EXP 与 魔法星！</span>
+                        </div>
+                        <div class="text-right">
+                            <span id="grammarScoreBadge" class="text-xs font-black text-amber-500 bg-amber-500/15 px-2 py-1 rounded-lg border border-amber-500/20">已答: 0/29</span>
+                        </div>
+                    </div>
+
+                    <!-- Topic Selector Bar -->
+                    <div class="bg-white dark:bg-[#2c2c2e] p-2.5 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm flex items-center justify-between gap-2">
+                        <label class="text-[9px] font-bold text-gray-500 dark:text-gray-400 flex-shrink-0">🎯 语法知识点专项:</label>
+                        <select id="quizTopicSelect" onchange="onQuizTopicChange(this.value)" class="flex-1 p-1 rounded-lg bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-[9px] font-bold text-gray-800 dark:text-gray-200 focus:outline-none">
+                            <option value="all">🌟 全部语法知识点综合练习</option>
+                            <option value="parts_of_speech">🔤 八大词性全景图</option>
+                            <option value="nouns_and_articles">🏷️ 名词分类与冠词</option>
+                            <option value="pronouns_system">👥 代词体系（人称/物主/指示）</option>
+                            <option value="adjectives_determiners">🎨 形容词与限定词</option>
+                            <option value="verb_basics_four_parts">⚡ 动词四大基本形式</option>
+                            <option value="adverbs_and_prepositions">🧭 副词五大类与介词短语</option>
+                            <option value="conjunctions_and_interjections">🔗 并列连词与感叹词</option>
+                            <option value="tenses_simple">⏳ 基础三大时态</option>
+                            <option value="interrogative_sentences">❓ 疑问句句型</option>
+                            <option value="present_perfect">🎯 现在完成时</option>
+                            <option value="passive_voice">🛡️ 被动语态</option>
+                            <option value="attributive_clause">🔗 定语从句</option>
+                            <option value="subjunctive_mood">✨ 虚拟语气</option>
+                            <option value="inversion_nonfinite">🔄 倒装句与非谓语动词</option>
+                        </select>
+                    </div>
+
+                    <!-- Current Active Question Card -->
+                    <div id="grammarQuizCard" class="bg-white dark:bg-[#2c2c2e] p-3.5 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm space-y-3">
+                        <!-- Question Progress & Topic Tag -->
+                        <div class="flex items-center justify-between">
+                            <span id="quizTopicTag" class="text-[8px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">时态攻坚</span>
+                            <span id="quizIndexText" class="text-[9px] font-bold text-gray-400">Question 1/29</span>
+                        </div>
+
+                        <!-- Question Prompt -->
+                        <p id="quizQuestionText" class="text-xs font-bold text-gray-800 dark:text-gray-100 leading-relaxed select-text">
+                            Loading question...
+                        </p>
+
+                        <!-- Options List -->
+                        <div id="quizOptionsList" class="space-y-1.5">
+                            <!-- Options buttons rendered here -->
+                        </div>
+
+                        <!-- Explanation Alert Box (hidden initially) -->
+                        <div id="quizExplanationBox" class="hidden p-2.5 rounded-xl text-[10px] leading-relaxed border space-y-1">
+                            <div class="font-black flex items-center gap-1" id="quizFeedbackTitle">解析指南</div>
+                            <p id="quizExplanationText" class="text-gray-700 dark:text-gray-300 font-medium"></p>
+                        </div>
+
+                        <!-- Next Question Button -->
+                        <button id="nextQuizBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl text-xs font-bold transition active:scale-95 hidden">
+                            下一题 ❯
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: AI Sentence Component Analyzer -->
+                <div id="grammarTabAnalyzer" class="grammar-tab-panel space-y-3 hidden">
+                    <div class="bg-white dark:bg-[#2c2c2e] p-3.5 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-black text-gray-700 dark:text-gray-200 flex items-center gap-1">
+                                <span>🔍 输入英语句子诊断结构</span>
+                            </label>
+                            <button id="sampleSentenceBtn" class="text-[8px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md">示例句子</button>
+                        </div>
+
+                        <textarea id="analyzerSentenceInput" rows="2" class="w-full p-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] text-xs font-medium text-gray-800 dark:text-gray-100 border border-black/5 dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none placeholder-gray-400" placeholder="例如: The wizard who unlocked the ancient spellbook cast a spell."></textarea>
+
+                        <button id="analyzeSentenceBtn" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white py-2 rounded-xl text-xs font-bold transition active:scale-95 shadow-md shadow-indigo-600/15">
+                            ⚡ 智能诊断与句法成分拆解
+                        </button>
+                    </div>
+
+                    <!-- Analysis Output Container -->
+                    <div id="analyzerResultBox" class="hidden space-y-2">
+                        <!-- Component Breakdown Card -->
+                        <div class="bg-white dark:bg-[#2c2c2e] p-3 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm space-y-2">
+                            <span class="text-[9px] font-black text-indigo-600 dark:text-indigo-400 block border-b border-black/5 dark:border-white/5 pb-1">🧩 句法结构拆解 (Syntax Tree)</span>
+                            
+                            <div id="componentTagsContainer" class="flex flex-wrap gap-1">
+                                <!-- Colored component tags -->
+                            </div>
+                        </div>
+
+                        <!-- Grammar Rules & Diagnostics Card -->
+                        <div class="bg-white dark:bg-[#2c2c2e] p-3 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm space-y-1.5">
+                            <span class="text-[9px] font-black text-purple-600 dark:text-purple-400 block border-b border-black/5 dark:border-white/5 pb-1">💡 语法点诊断与时态判定</span>
+                            <div id="analyzerDiagnosticList" class="space-y-1 text-[10px]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/5 dark:border-white/5 p-2.5 flex-shrink-0 text-center">
+                <span class="text-[8px] text-gray-400">掌握语法逻辑，让你的英语拼读与写作突飞猛进！</span>
+            </div>
+
         </div>
     </div>
 
@@ -1037,10 +1199,25 @@
                 });
             }
 
+            // Grammar Module Trigger
+            const openGrammarModalBtn = document.getElementById('openGrammarModalBtn');
+            if (openGrammarModalBtn) {
+                openGrammarModalBtn.addEventListener('click', () => {
+                    openGrammarModal();
+                });
+            }
+
+            const closeGrammarModalBtn = document.getElementById('closeGrammarModalBtn');
+            if (closeGrammarModalBtn) {
+                closeGrammarModalBtn.addEventListener('click', () => {
+                    closeGrammarModal();
+                });
+            }
+
             // Global Escape key modal dismiss
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    document.querySelectorAll('#wizardSanctuaryModal, #courseSelectionModal').forEach(m => {
+                    document.querySelectorAll('#wizardSanctuaryModal, #courseSelectionModal, #grammarLearningModal').forEach(m => {
                         m.classList.add('hidden');
                     });
                 }
@@ -4559,6 +4736,1012 @@
 
         function calculateAndInjectEbbinghausReviews() {
             updateReinforcementCounts();
+        }
+
+        // ==========================================
+        //         GRAMMAR LEARNING MODULE
+        // ==========================================
+        function speakText(text) {
+            if (!text) return;
+            try {
+                getAudioContext();
+                const accentRadio = document.querySelector('input[name="accentType"]:checked');
+                const accent = accentRadio ? accentRadio.value : '2';
+                const targetSrc = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+                el.audio.src = targetSrc;
+                el.audio.play().catch(() => {});
+            } catch(e) {}
+        }
+
+        const GRAMMAR_DATA = [
+            {
+                id: 'parts_of_speech',
+                category: '初级基础',
+                icon: '🔤',
+                title: '八大词性全景图 (Parts of Speech)',
+                subtitle: '名词、代词、形容词、动词、副词、介词、连词与感叹词',
+                formula: '8大词性: Nouns(n.) | Pronouns(pron.) | Verbs(v.) | Adjectives(adj.) | Adverbs(adv.) | Prepositions(prep.) | Conjunctions(conj.) | Interjections(interj.)',
+                overview: '根据图解语法体系（Gabriele Stobbe），英语由八大词性构成。单词是语言沟通的工具，词性决定了单词在句子中充当的角色与职能。',
+                rules: [
+                    { name: '实体与替代 (Nouns & Pronouns)', detail: '名词 (Noun) 命名人、地点、事物或抽象概念；代词 (Pronoun) 用于替代名词，避免单调重复。', trap: '⚠️ 专有名词首字母必须大写；代词需保持人称、单复数与性别的格式一致。' },
+                    { name: '动作与修饰 (Verbs & Adverbs/Adjectives)', detail: '动词 (Verb) 是句子的心脏，表达动作或状态；形容词 (Adj) 修饰名词特征；副词 (Adv) 修饰动词、形容词或全句。', trap: '⚠️ 形容词修饰名词 (blue ball)，副词修饰动词 (swim quickly)；不能混淆两者！' },
+                    { name: '纽带与情感 (Prepositions, Conjunctions & Interjections)', detail: '介词 (Prep) 放置于名词前建立时空纽带；连词 (Conj) 连接同类词/句；感叹词 (Interj) 独立表达强烈情感。', trap: '⚠️ 介词后接代词时必须使用宾格 (with him)；连词只能连接同等性质的成分。' }
+                ],
+                examples: [
+                    { en: "Susan swims fast in the big pool.", zh: "苏珊在大泳池里游得很快。(Susan[n.] swims[v.] fast[adv.] in[prep.] the[art.] big[adj.] pool[n.])" },
+                    { en: "Wow! Anna and Ben love swimming.", zh: "哇！安娜和本都喜欢游泳。(Wow![interj.] Anna[n.] and[conj.] Ben[n.] love[v.] swimming[v.-ing])" }
+                ]
+            },
+            {
+                id: 'nouns_and_articles',
+                category: '初级基础',
+                icon: '🏷️',
+                title: '名词分类、单复数与冠词 (Nouns & Articles)',
+                subtitle: '专有/普通/抽象名词、单复数变化规则、a/an/the 与 \'s 所有格',
+                formula: '复数: +s / +es(s,x,z,sh,ch) / f,fe->ves / y->ies | 所有格: Noun\'s + Noun / Noun of Noun',
+                overview: '名词是语言表达的核心实体。名词拥有类型、单复数形式、冠词修饰以及表达所属关系的所有格（Possessive）。',
+                rules: [
+                    { name: '六大名词分类 (Types of Nouns)', detail: 'Proper (专有名词 Susan)、Common (普通名词 school)、Concrete (具体名词 hamburger)、Abstract (抽象名词 love)、Collective (集合名词 family)、Compound (复合名词 suntan lotion)。', trap: '⚠️ 一个名词可同时属于多类（如 suntan lotion 既是普通/具体名词也是复合名词）。' },
+                    { name: '单复数规则 (Singular & Plural)', detail: '一般加 -s (balls)；以 s, x, z, sh, ch 结尾加 -es (watches)；以 f/fe 结尾变 v 加 -es (wives)；以辅音+y结尾变 i 加 -es (families)。', trap: '⚠️ 不可数名词（如 advice, information, furniture）无复数形式，不能加 a/an！' },
+                    { name: '冠词与所有格 (Articles & Possessives)', detail: '不定冠词 a (辅音音素前, a towel) / an (元音音素前, an air mattress)；定冠词 the 特指。有生命名词用 \'s (child\'s ball / kids\' swimsuits)，无生命用 of 短语 (the diving board of the pool)。', trap: '⚠️ 表所属时，以 s 结尾的复数名词只加撇号 \' (the kids\' swimsuits)。' }
+                ],
+                examples: [
+                    { en: "An air mattress and three beach towels are by the pool.", zh: "一张充气垫和三条沙滩巾在泳池旁。(an + 元音开头，towels 加 -s 复数)" },
+                    { en: "The pool's diving board is very strong.", zh: "泳池的跳板非常坚固。(等于 the diving board of the pool)" }
+                ]
+            },
+            {
+                id: 'pronouns_system',
+                category: '初级基础',
+                icon: '👥',
+                title: '代词体系：人称格、物主与指示代词 (Pronouns)',
+                subtitle: '主格(I/he)、宾格(me/him)、名词性物主代词(mine/hers)与指示(this/that)',
+                formula: '主格 + 动词 + 宾格 | 名词性物主代词 = 形容词性物主代词 + 名词 (It is mine = It is my book)',
+                overview: '代词替代名词以避免单调重复。代词根据人称 (1st/2nd/3rd)、数 (Singular/Plural) 与性别 (Masculine/Feminine/Neuter) 发生变格。',
+                rules: [
+                    { name: '人称代词格 (Subject & Object Pronouns)', detail: '主格作主语 (I, you, he, she, it, we, they)；宾格作动词或介词宾语 (me, you, him, her, it, us, them)。', trap: '⚠️ 在动词或介词后面必须使用宾格 (例如: Ben stands with him，绝不能用 with he)！' },
+                    { name: '物主代词 (Possessive Pronouns)', detail: 'mine, yours, his, hers, its, ours, theirs 独立作代词使用，表达所属，绝不加撇号 \'！', trap: '⚠️ 注意区分：her 是形容词性物主代词 (her book)，hers 是名词性物主代词 (The book is hers)！' },
+                    { name: '指示与不定代词 (Demonstrative & Indefinite)', detail: '指示代词：this/that (单数，近/远)，these/those (复数，近/远)；不定代词：somebody, something (单数)，both, several (复数)。', trap: '⚠️ somebody/something 作主语时谓语动词用单数 (Somebody takes the flippers)。' }
+                ],
+                examples: [
+                    { en: "Ben asks her if she wants to go to the pool.", zh: "本问她是否想去泳池。(her 为宾格，she 为主格)" },
+                    { en: "This hula hoop is mine; yours is in the locker room.", zh: "这个呼啦圈是我的；你的在更衣室。(mine = my hula hoop)" }
+                ]
+            },
+            {
+                id: 'adjectives_determiners',
+                category: '初级基础',
+                icon: '🎨',
+                title: '形容词与限定词 (Adjectives & Determiners)',
+                subtitle: '描述性/表语/专有形容词、限定词(a/my/this/some)与构词后缀(-less/-ful/-able)',
+                formula: '前置修饰: Adj + Noun (blue ball) | 表语形容词: Subject + Linking Verb + Adj (The pool is warm)',
+                overview: '形容词修饰名词或代词。分为描述性形容词（说明形状/大小/颜色）与限定词（确定具体指代）。',
+                rules: [
+                    { name: '描述性与表语形容词 (Descriptive & Predicate)', detail: '普通形容词位置：名词前 (wet flippers) 或连系动词后作表语 (The hamburger is large)。', trap: '⚠️ 表语形容词位于 be / look / feel / taste 等连系动词之后，修饰主语。' },
+                    { name: '专有形容词 (Proper Adjectives)', detail: '由专有名词派生，首字母必须大写 (Mexico -> Mexican student, America -> American flag)。', trap: '⚠️ 专有形容词必须大写首字母，如 Chinese, English, Mexican。' },
+                    { name: '限定词与构词后缀 (Determiners & Suffixes)', detail: '限定词包括冠词 (a/an/the)、物主 (my/your)、指示 (this/those)、疑问 (which/whose)、不定 (some/several)、数词 (one/two)。后缀：-less 无 (fearless), -ful 充满 (wonderful), -able 能够 (breakable)。', trap: '⚠️ 限定词的出现标志着后面必有名词跟随！' }
+                ],
+                examples: [
+                    { en: "Jake is a fearless swimmer in the wonderful pool.", zh: "杰克是精彩泳池里一位无畏的游泳者。(-less 和 -ful 后缀)" },
+                    { en: "The Mexican flag has green, white, and red colors.", zh: "墨西哥国旗有绿、白、红三色。(Mexican 为专有形容词大写)" }
+                ]
+            },
+            {
+                id: 'verb_basics_four_parts',
+                category: '初级基础',
+                icon: '⚡',
+                title: '动词分类与四大基本形式 (Verbs & 4 Principal Parts)',
+                subtitle: '动作/状态/连系/助动词、四大主形式 (Base, Past, PresPart, PastPart)',
+                formula: '4大主形式: 1.Base (walk) | 2.Past (walked) | 3.Pres.Part (is walking) | 4.Past.Part (has walked)',
+                overview: '动词是句子的心脏，表达动作、状态或所有关系。所有英语动词都拥有四大基本形式（Four Principal Parts）。',
+                rules: [
+                    { name: '四大动词类型 (Types of Verbs)', detail: '1. Action Verbs (动作动词 eat/swim) 2. Non-Action Verbs (心理/感知动词 think/understand) 3. Linking Verbs (连系动词 be/look/feel) 4. Helping Verbs (助动词 be/do/have/modals)。', trap: '⚠️ 连系动词 (to be) 后面接形容词或名词作主语补足语 (Subject Complement)。' },
+                    { name: '四大基本形式 (4 Principal Parts)', detail: '1. Base Form (原形 walk/write) 2. Past Form (过去式 walked/wrote) 3. Present Participle (现在分词 -ing，需配 be) 4. Past Participle (过去分词 -ed/不规则，需配 have)。', trap: '⚠️ 现在分词 (-ing) 和过去分词 (-ed/V-3) 不能单独作谓语，必须搭配助动词 (is walking / has written)！' },
+                    { name: '情态助动词 (Modals)', detail: 'can, could, may, might, must, should, would 用于表达可能性、能力、必要性或委婉请求。', trap: '⚠️ 情态动词形式永不改变（无三单-s，无过去式-ed），后面必须紧跟动词原形 (must pass)！' }
+                ],
+                examples: [
+                    { en: "Maria is going to the pool; she has written a book.", zh: "玛利亚正在去泳池；她写了一本书。(is going 为现分+be，has written 为过分+have)" },
+                    { en: "Anna must pass the spelling test tomorrow.", zh: "安娜明天必须通过拼读测试。(情态动词 must + 动词原形 pass)" }
+                ]
+            },
+            {
+                id: 'adverbs_and_prepositions',
+                category: '初级基础',
+                icon: '🧭',
+                title: '副词五大类与介词短语 (Adverbs & Prepositions)',
+                subtitle: '时间/地点/方式/程度/频度副词、介词短语 (into/on top of/at/in/on)',
+                formula: '介词短语 = Preposition + Object Noun/Pronoun (under the lifeguard chair / with him)',
+                overview: '副词修饰动词、形容词或其他副词；介词放置于名词/代词前，建立时间、空间与移动方向的逻辑纽带。',
+                rules: [
+                    { name: '副词五大分类 (5 Groups of Adverbs)', detail: '时间 (today, soon)、地点 (inside, here)、方式 (carefully, slowly)、程度 (nearly, almost, very)、频度 (always, often, seldom, never)。', trap: '⚠️ 程度副词 (very, too) 既可修饰副词 (swims very well) 也可修饰形容词 (very bad swimmer)。' },
+                    { name: '形容词变副词与后缀 -ly', detail: '多数形容词加 -ly 变副词 (quick -> quickly, careful -> carefully)；少数副词无 -ly 后缀 (fast, hard, early, soon, now)。', trap: '⚠️ "hard" 作副词意为“努力地”，而 "hardly" 意为“几乎不”，意义完全不同！' },
+                    { name: '介词三要素与短语 (Prepositional Phrases)', detail: '方向移动 (into, out of)、位置地点 (inside, under, on top of)、时间 (at 9:00, on Monday, in July)。介词 + 宾语构成介词短语。', trap: '⚠️ 介词后面接代词时必须使用“宾格”！(例: with him / for her / under it，绝不能用 with he)。' }
+                ],
+                examples: [
+                    { en: "Ben stands under the lifeguard chair and waits for her.", zh: "本站在救生员椅下面等她。(under the chair 与 for her 均为介词短语，用宾格 her)" },
+                    { en: "The friends often walk carefully around the pool.", zh: "朋友们经常小心地绕着泳池散步。(often 为频度副词，carefully 为方式副词)" }
+                ]
+            },
+            {
+                id: 'conjunctions_and_interjections',
+                category: '初级基础',
+                icon: '🔗',
+                title: '并列连词与感叹词 (Conjunctions & Interjections)',
+                subtitle: 'and(顺递)、or(选择)、but(转折)；感叹词(Wow!/Oh!/Bravo!)',
+                formula: 'Word + Conj + Word | Phrase + Conj + Phrase | Sentence + Conj + Sentence',
+                overview: '并列连词连接同等性质的单词、短语或句子；感叹词独立于句子结构之外，表达强烈情感或惊叹。',
+                rules: [
+                    { name: '三大核心并列连词', detail: 'and 表示递进或补充 (Anna and Jake)；or 表示选择 (green or pink bikini)；but 表示转折与对比 (All came, but Maria was not there)。', trap: '⚠️ 连词只能连接相同类型的成分（名词+名词，形容词+形容词，短语+短语，句子+句子）。' },
+                    { name: '连接短语与句子', detail: '连接短语：For Jake and for Maria；连接句子：We went to the pool, but the Miller family went to the parade.', trap: '⚠️ 连接两个独立句子时，通常在连词前加逗号 (Sentence, but Sentence)。' },
+                    { name: '感叹词 (Interjections)', detail: '表达强烈情绪或惊叹：Wow! Oh! Hey! Bravo! 独立存在，常跟随感叹号 ! 或逗号 ,。', trap: '⚠️ 感叹词在语法上独立于句子的主谓结构之外。' }
+                ],
+                examples: [
+                    { en: "Wow! Look at that! The swimmer won the race.", zh: "哇！快看那个！游泳选手赢得了比赛。(Wow! 为感叹词)" },
+                    { en: "Ben likes ice cream, but Susan likes popsicles.", zh: "本喜欢冰淇淋，但苏珊喜欢冰棒。(but 表示转折对比)" }
+                ]
+            },
+            {
+                id: 'tenses_simple',
+                category: '初级基础',
+                icon: '⏳',
+                title: '基础三大时态 (Simple Tenses)',
+                subtitle: '一般现在时、一般过去时与一般将来时',
+                formula: '一般现在: S + V(s/es) | 一般过去: S + V-ed | 一般将来: S + will/be going to + V',
+                overview: '三大基础时态表示动作在不同时间点的发生状态，涵盖了日常交流中 80% 的句式表达。',
+                rules: [
+                    { name: '一般现在时 (Simple Present)', detail: '表示经常性动作、习惯或客观真理。主语为第三人称单数（he/she/it）时，动词需加 -s/es。', trap: '⚠️ 客观真理永远用一般现在时（例：The earth moves around the sun），不受主句过去时限制。' },
+                    { name: '一般过去时 (Simple Past)', detail: '表示过去特定时间发生的动作，常伴随 yesterday, in 2020, ago 等标志词。', trap: '⚠️ 规则动词加 -ed，不规则动词需牢记特殊变体（go -> went, buy -> bought）。' },
+                    { name: '一般将来时 (Simple Future)', detail: 'will + 动词原形表示临时决定/客观预测；be going to 表示主观计划与意图。', trap: '⚠️ 在时间与条件状语从句中（if/when/as soon as），遵循“主将从现”原则！' }
+                ],
+                examples: [
+                    { en: "If it rains tomorrow, we will stay at home.", zh: "如果明天下雨，我们将留在家里。(从句if用rains现在时，主句用will将来时)" },
+                    { en: "She bought a new spellbook yesterday.", zh: "她昨天买了一本新魔法书。(过去时标志词 yesterday)" }
+                ]
+            },
+            {
+                id: 'interrogative_sentences',
+                category: '初级基础',
+                icon: '❓',
+                title: '疑问句句型 (Interrogative Sentences)',
+                subtitle: '一般疑问句、特殊疑问句、选择疑问句与反意疑问句',
+                formula: '一般疑问句: Be/Aux/Modal + S + V ...? | 特殊疑问句: Wh-特殊疑问词 + 一般疑问句?',
+                overview: '疑问句用于提出问题或寻求确认，主要包含一般疑问句（用Yes/No回答）、特殊疑问句（寻求具体细节）、选择疑问句和反意疑问句。',
+                rules: [
+                    { name: '一般疑问句 (General Questions)', detail: '将 Be 动词 (Is/Are/Was/Were)、助动词 (Do/Does/Did) 或情态动词 (Can/May/Must) 提至句首，通常用 Yes 或 No 简答。', trap: '⚠️ 用 Do/Does/Did 提问后，后面的谓语动词必须还原为“动词原形”！' },
+                    { name: '特殊疑问句 (Special Questions)', detail: '特殊疑问词 (What, Where, When, Why, Who, Whose, Which, How) + 一般疑问句语序。用于询问具体时间、地点、原因等。', trap: '⚠️ 当疑问词在句子中做“主语”时，直接接谓语，不用倒装（例：Who unlocked the spellbook?）。' },
+                    { name: '反意疑问句 (Tag Questions)', detail: '附加在陈述句末尾进行确认，遵循“前肯后否，前否后肯”原则（例：He is a wizard, isn\'t he?）。', trap: '⚠️ 答语根据客观事实判断：事实是肯定用 Yes，事实是否定用 No（不要受中文习惯混淆）！' }
+                ],
+                examples: [
+                    { en: "Do you know how to cast this magical spell?", zh: "你知道如何施展这个魔咒吗？(一般疑问句)" },
+                    { en: "Where did you buy this ancient spellbook?", zh: "你是在哪里买到这本古老魔法书的？(特殊疑问句)" },
+                    { en: "She is a talented wizard, isn't she?", zh: "她是一位有天赋的巫师，对吧？(反意疑问句)" }
+                ]
+            },
+            {
+                id: 'present_perfect',
+                category: '中级进阶',
+                icon: '🎯',
+                title: '现在完成时 (Present Perfect Tense)',
+                subtitle: '过去动作对现在的深远影响与经验',
+                formula: 'Subject + have/has + Past Participle (V-ed/V-3)',
+                overview: '现在完成时连接过去与现在，强调过去发生的动作对现在产生的结果或持续至今的状态。',
+                rules: [
+                    { name: '三大核心用法', detail: '1. 影响性：过去动作造成现在结果。 2. 持续性：延续至今（配 for + 时间段 / since + 时间点）。 3. 经验：表示“曾做过/从未做过”。', trap: '⚠️ 绝不能与明确的过去时间状语（如 yesterday, 2 years ago, in 2018）连用！' },
+                    { name: 'have been to vs. have gone to', detail: 'have/has been to 表示“去过某地（已返回）”；have/has gone to 表示“去了某地（尚未回来）”。', trap: '⚠️ 瞬间动词（die, join, leave, buy）在现在完成时中不能与 for/since 连用，需转为持续状态（如 been dead, been in）。' }
+                ],
+                examples: [
+                    { en: "I have lived in Beijing for five years.", zh: "我已经在北京生活了五年。(从过去持续到现在)" },
+                    { en: "He has gone to London, so you can't see him now.", zh: "他去伦敦了，所以你现在见不到他。(去而未归)" }
+                ]
+            },
+            {
+                id: 'passive_voice',
+                category: '中级进阶',
+                icon: '🛡️',
+                title: '被动语态 (Passive Voice)',
+                subtitle: '强调动作承受者与客观表达',
+                formula: 'Subject + be (各时态形式) + Past Participle (V-3) (+ by ...)',
+                overview: '当动作承受者比执行者更重要、或者执行者未知时，需使用被动语态。',
+                rules: [
+                    { name: '核心时态变体', detail: '一般现在被动: am/is/are + done | 一般过去被动: was/were + done | 现在完成被动: have/has been + done', trap: '⚠️ 不及物动词（如 happen, occur, take place, disappear）绝对没有被动语态！' },
+                    { name: '使役与感官动词被动', detail: 'make, see, hear 在主动语态中省 to，变被动语态时必须还原 to（例：be seen to do）。', trap: '⚠️ 注意主谓一致，系动词 be 的单复数需跟被动句的新主语保持一致。' }
+                ],
+                examples: [
+                    { en: "The ancient spellbook was written in 1820.", zh: "这本古老的魔法书写于1820年。(一般过去时被动语态)" },
+                    { en: "Accidents can be prevented through careful study.", zh: "通过仔细研习，事故是可以预防的。(含情态动词被动)" }
+                ]
+            },
+            {
+                id: 'attributive_clause',
+                category: '中级进阶',
+                icon: '🔗',
+                title: '定语从句 (Attributive Clauses)',
+                subtitle: '关系代词与关系副词精准修饰先行词',
+                formula: '先行词 (Noun/Pronoun) + 关系词 (who/which/that/whose/where/when) + 从句',
+                overview: '定语从句相当于复合形容词，紧跟在先行词后面进行限定修饰或补充说明。',
+                rules: [
+                    { name: '关系代词选法', detail: '指人：who (主语), whom (宾语), whose (所有格) | 指物：which, that | 人/物通用：whose', trap: '⚠️ 只用 that 不用 which 的情况：先行词被最高级、序数词修饰，或先行词为 all, something, everything 时。' },
+                    { name: '关系副词选法', detail: 'when (时间状语), where (地点状语), why (原因状语)。可等价替换为 "介词 + which"。', trap: '⚠️ 介词后绝不能使用 that 或 who 做关系代词（介词后只能用 whom 或 which）！' }
+                ],
+                examples: [
+                    { en: "The student who won the spellquest competition was awarded a badge.", zh: "赢得了拼读大赛的学生被授予了一枚勋章。(who作从句主语)" },
+                    { en: "This is the sanctuary where magical spells are created.", zh: "这就是创造魔法咒语的圣殿。(where作地点状语)" }
+                ]
+            },
+            {
+                id: 'subjunctive_mood',
+                category: '高级精通',
+                icon: '✨',
+                title: '虚拟语气 (Subjunctive Mood)',
+                subtitle: '表达假设、愿望、非真实情况与强烈建议',
+                formula: '与现在相反: If S + did/were, S + would/could/should/might + do',
+                overview: '虚拟语气用于表达与客观事实相反的假设、不可能实现的愿望或建议与命令。',
+                rules: [
+                    { name: '与过去事实相反', detail: 'If + S + had done ..., S + would/could/should/might + have done ...', trap: '⚠️ 条件句中 be 动词不论主语单复数，一律使用 were（例：If I were you ...）。' },
+                    { name: '建议/要求/命令从句', detail: 'suggest, demand, insist, order 后的宾语从句使用 (should) + 动词原形。', trap: '⚠️ It is high time that ... 结构后需用过去时动词（或 should do）。' }
+                ],
+                examples: [
+                    { en: "If I had studied harder yesterday, I would have passed the test.", zh: "如果我昨天更努力学习，我就会通过测试了。(与过去事实相反)" },
+                    { en: "The teacher suggested that every student practice spelling daily.", zh: "老师建议每个学生每天练习拼写。(suggest从句省略should)" }
+                ]
+            },
+            {
+                id: 'inversion_nonfinite',
+                category: '高级精通',
+                icon: '🔄',
+                title: '倒装句与非谓语动词 (Inversion & Non-finites)',
+                subtitle: '否定倒装、分词作状语与不定式',
+                formula: '否定倒装: Never/Hardly/Seldom + Aux/Be + S + V',
+                overview: '倒装强化句式语气与文采；非谓语动词 (to do, doing, done) 使表达紧凑生动。',
+                rules: [
+                    { name: '部分倒装 (Partial Inversion)', detail: '当 Never, Hardly, Seldom, Little 位于句首时，将助动词/系动词提到主语前面。', trap: '⚠️ Hardly ... when ... 和 No sooner ... than ... 表示“一……就……”，前句用过去完成时倒装。' },
+                    { name: 'V-ing vs. V-ed 做状语', detail: '现在分词 (doing) 表示主动/进行；过去分词 (done) 表示被动/完成。', trap: '⚠️ 分词做状语时，其逻辑主语必须与主句的主语保持完全一致！' }
+                ],
+                examples: [
+                    { en: "Never have I seen such an impressive magical spell.", zh: "我从未见过如此令人印象深刻的魔咒。(否定副词Never位于句首倒装)" },
+                    { en: "Hearing the bell ring, the students entered the wizard sanctuary.", zh: "听到铃声响起，学生们进入了魔法圣殿。(Hearing逻辑主语为students)" }
+                ]
+            }
+        ];
+
+        const GRAMMAR_QUIZ = [
+            // 1. 八大词性全景图 (parts_of_speech)
+            {
+                id: 'q_pos_1',
+                topicId: 'parts_of_speech',
+                topic: '八大词性全景图',
+                question: 'In the sentence "Susan swims fast in the big pool", what part of speech is the word "fast"?',
+                options: ['Noun (名词)', 'Adverb (副词)', 'Adjective (形容词)', 'Verb (动词)'],
+                answer: 1,
+                explanation: 'fast 在此处修饰动词 swims，作状语说明游泳的速度快，因此属于副词 (Adverb)。'
+            },
+            {
+                id: 'q_pos_2',
+                topicId: 'parts_of_speech',
+                topic: '八大词性全景图',
+                question: 'Which word in "Wow! You scored full marks on the spell test!" is an interjection (感叹词)?',
+                options: ['You', 'scored', 'Wow', 'full'],
+                answer: 2,
+                explanation: '“Wow!” 是表达强烈惊叹情绪的独立感叹词 (Interjection)。'
+            },
+            {
+                id: 'q_pos_3',
+                topicId: 'parts_of_speech',
+                topic: '八大词性全景图',
+                question: 'She gave me some useful ___ on how to master English grammar.',
+                options: ['advices', 'advice', 'an advice', 'advised'],
+                answer: 1,
+                explanation: 'advice 是不可数名词，不能加 -s 变成复数，也不能直接加不定冠词 an。'
+            },
+
+            // 2. 名词分类与冠词 (nouns_and_articles)
+            {
+                id: 'q_noun_1',
+                topicId: 'nouns_and_articles',
+                topic: '名词分类与冠词',
+                question: 'There are three beach ___ by the swimming pool.',
+                options: ['towels', 'towel', 'toweles', 'towelies'],
+                answer: 0,
+                explanation: 'towel 为可数名词，被基数词 three 修饰时，变复数直接加 -s 成为 towels。'
+            },
+            {
+                id: 'q_noun_2',
+                topicId: 'nouns_and_articles',
+                topic: '名词分类与冠词',
+                question: 'Which of the following phrases correctly expresses "the diving board of the pool" using possessive case?',
+                options: ["the pool's diving board", "the pools diving board", "the pool diving board's", "pool's of diving board"],
+                answer: 0,
+                explanation: "单数名词的所有格形式通常在词尾加 's，例如 the pool's diving board (泳池跳板)。"
+            },
+            {
+                id: 'q_noun_3',
+                topicId: 'nouns_and_articles',
+                topic: '名词分类与冠词',
+                question: 'Honesty is ___ best policy in any friendship.',
+                options: ['a', 'an', 'the', '/'],
+                answer: 2,
+                explanation: '最高级形容词 best 前必须接定冠词 the。'
+            },
+
+            // 3. 代词体系 (pronouns_system)
+            {
+                id: 'q_pron_1',
+                topicId: 'pronouns_system',
+                topic: '代词体系',
+                question: 'The wizard teacher waits for ___ at the entrance of the classroom.',
+                options: ['she', 'her', 'hers', 'herself'],
+                answer: 1,
+                explanation: '介词 for 后面需要接人称代词的宾格形式，she 的宾格为 her。'
+            },
+            {
+                id: 'q_pron_2',
+                topicId: 'pronouns_system',
+                topic: '代词体系',
+                question: 'This magical spellbook is ___; yours is over there on the desk.',
+                options: ['my', 'me', 'mine', 'myself'],
+                answer: 2,
+                explanation: '此处表示“我的（魔法书）”，后面没有接名词，因此需要使用名词性物主代词 mine。'
+            },
+            {
+                id: 'q_pron_3',
+                topicId: 'pronouns_system',
+                topic: '代词体系',
+                question: 'Is there ___ who can answer this difficult grammar question?',
+                options: ['anybody', 'somebody', 'nobody', 'everybody'],
+                answer: 0,
+                explanation: '在一般疑问句中，表示“有人/任何人”通常优先使用不定代词 anybody。'
+            },
+
+            // 4. 形容词与限定词 (adjectives_determiners)
+            {
+                id: 'q_adj_1',
+                topicId: 'adjectives_determiners',
+                topic: '形容词与限定词',
+                question: 'This novel is much ___ than the one we read last term.',
+                options: ['interesting', 'more interesting', 'most interesting', 'the most interesting'],
+                answer: 1,
+                explanation: '句中有比较级标志词 than，且形容词前有 much 修饰程度，应当使用比较级 more interesting。'
+            },
+            {
+                id: 'q_adj_2',
+                topicId: 'adjectives_determiners',
+                topic: '形容词与限定词',
+                question: 'He is a ___ student who always finishes his homework on time.',
+                options: ['diligence', 'diligently', 'diligent', 'more diligence'],
+                answer: 2,
+                explanation: '此处需要修饰名词 student 作定语，应当使用形容词 diligent (勤奋的)。'
+            },
+
+            // 5. 动词四大基本形式 (verb_basics_four_parts)
+            {
+                id: 'q_verb_1',
+                topicId: 'verb_basics_four_parts',
+                topic: '动词四大基本形式',
+                question: 'The famous wizard author has ___ a new spellbook for young learners.',
+                options: ['write', 'wrote', 'written', 'writing'],
+                answer: 2,
+                explanation: '助动词 has 后面需要接动词的过去分词 (Past Participle) 构成现在完成时，write 的过去分词是 written。'
+            },
+            {
+                id: 'q_verb_2',
+                topicId: 'verb_basics_four_parts',
+                topic: '动词四大基本形式',
+                question: 'All wizard students ___ follow the sanctuary safety rules.',
+                options: ['must', 'ought', 'have', 'need to be'],
+                answer: 0,
+                explanation: '情态动词 must 表示“必须”，后面直接跟动词原形 follow。'
+            },
+
+            // 6. 副词与介词短语 (adverbs_and_prepositions)
+            {
+                id: 'q_adv_1',
+                topicId: 'adverbs_and_prepositions',
+                topic: '副词与介词短语',
+                question: 'Please walk ___ around the slippery swimming pool deck.',
+                options: ['careful', 'carefully', 'carefulness', 'caring'],
+                answer: 1,
+                explanation: '修饰动词 walk 应当使用副词 carefully 作状语。'
+            },
+            {
+                id: 'q_adv_2',
+                topicId: 'adverbs_and_prepositions',
+                topic: '副词与介词短语',
+                question: 'The students walked ___ the locker room after the swimming practice.',
+                options: ['into', 'at', 'on', 'with'],
+                answer: 0,
+                explanation: 'into 表示“进入...内部”，walk into the locker room 意为进入更衣室。'
+            },
+
+            // 7. 并列连词与感叹词 (conjunctions_and_interjections)
+            {
+                id: 'q_conj_1',
+                topicId: 'conjunctions_and_interjections',
+                topic: '并列连词与感叹词',
+                question: 'He worked hard, ___ he failed to unlock the highest spell level.',
+                options: ['and', 'so', 'but', 'or'],
+                answer: 2,
+                explanation: '前后两句存在“努力了但没成功”的转折逻辑，应用连词 but。'
+            },
+            {
+                id: 'q_conj_2',
+                topicId: 'conjunctions_and_interjections',
+                topic: '并列连词与感叹词',
+                question: '___! You won first place in the spell competition!',
+                options: ['Bravo', 'Alas', 'Ouch', 'Ahem'],
+                answer: 0,
+                explanation: 'Bravo! 常用于欢呼鼓掌、祝贺取得优异成绩。'
+            },
+
+            // 8. 基础三大时态 (tenses_simple)
+            {
+                id: 'q_tense_1',
+                topicId: 'tenses_simple',
+                topic: '基础三大时态',
+                question: 'If it ___ sunshine tomorrow, we will go on a picnic in the park.',
+                options: ['is', 'will be', 'was', 'has been'],
+                answer: 0,
+                explanation: '在条件状语从句（if从句）中，遵循“主将从现”原则。主句用将来时 will go，从句用一般现在时 is。'
+            },
+            {
+                id: 'q_tense_2',
+                topicId: 'tenses_simple',
+                topic: '基础三大时态',
+                question: 'Yesterday, the wizard student ___ an ancient magic book from the market.',
+                options: ['buys', 'bought', 'has bought', 'will buy'],
+                answer: 1,
+                explanation: '句中有明确的过去时间状语 Yesterday，必须使用一般过去时 bought。'
+            },
+
+            // 9. 疑问句句型 (interrogative_sentences)
+            {
+                id: 'q_ques_1',
+                topicId: 'interrogative_sentences',
+                topic: '疑问句句型',
+                question: '___ did you find this magical spellbook yesterday?',
+                options: ['Where', 'What', 'Who', 'Which'],
+                answer: 0,
+                explanation: '根据动词 find (找到) 与地点场所语义，询问“在何处/哪里”找到魔法书应使用特殊疑问词 Where。'
+            },
+            {
+                id: 'q_ques_2',
+                topicId: 'interrogative_sentences',
+                topic: '疑问句句型',
+                question: 'She is a talented wizard student, ___?',
+                options: ["isn't she", "doesn't she", "is she", "hasn't she"],
+                answer: 0,
+                explanation: "反意疑问句遵循“前肯后否”原则，前半句陈述句包含系动词 is，简短疑问句用 isn't she。"
+            },
+
+            // 10. 现在完成时 (present_perfect)
+            {
+                id: 'q_perf_1',
+                topicId: 'present_perfect',
+                topic: '现在完成时',
+                question: 'How long ___ you ___ in this magic school? — Since 2023.',
+                options: ['did; study', 'have; studied', 'do; study', 'will; study'],
+                answer: 1,
+                explanation: '根据答语标志词 "Since 2023"（自2023年以来），表示从过去持续到现在的动作，用现在完成时 have studied。'
+            },
+            {
+                id: 'q_perf_2',
+                topicId: 'present_perfect',
+                topic: '现在完成时',
+                question: 'My brother is not at home. He ___ to the library.',
+                options: ['has been', 'has gone', 'went', 'was going'],
+                answer: 1,
+                explanation: 'have/has gone to 表示“去了某地（尚未返回）”，主语当前不在家；have/has been to 表示“去过某地（已返回）”。'
+            },
+
+            // 11. 被动语态 (passive_voice)
+            {
+                id: 'q_pass_1',
+                topicId: 'passive_voice',
+                topic: '被动语态',
+                question: 'The famous fantasy novel ___ by the young author last month.',
+                options: ['publishes', 'was published', 'is published', 'has published'],
+                answer: 1,
+                explanation: 'Novel (小说) 与 publish (出版) 是被动关系，结合 last month 过去时间标志，应用一般过去时的被动语态 was published。'
+            },
+            {
+                id: 'q_pass_2',
+                topicId: 'passive_voice',
+                topic: '被动语态',
+                question: 'Laboratory accidents can be ___ through careful training.',
+                options: ['prevent', 'prevented', 'preventing', 'prevents'],
+                answer: 1,
+                explanation: '含情态动词 can 的被动语态结构为：can + be + 过去分词 (prevented)。'
+            },
+
+            // 12. 定语从句 (attributive_clause)
+            {
+                id: 'q_attr_1',
+                topicId: 'attributive_clause',
+                topic: '定语从句',
+                question: 'This is the wizard spellbook ___ contains all ancient secrets.',
+                options: ['who', 'which', 'whom', 'where'],
+                answer: 1,
+                explanation: '先行词 spellbook 是物体，且在从句中充当主语，关系代词应选用 which (或 that)。'
+            },
+            {
+                id: 'q_attr_2',
+                topicId: 'attributive_clause',
+                topic: '定语从句',
+                question: 'The wizard student ___ won the competition was awarded a gold badge.',
+                options: ['which', 'who', 'whose', 'where'],
+                answer: 1,
+                explanation: '先行词 student 是指人的名词，且在后方从句中充当主语，引导词选用 who。'
+            },
+
+            // 13. 虚拟语气 (subjunctive_mood)
+            {
+                id: 'q_subj_1',
+                topicId: 'subjunctive_mood',
+                topic: '虚拟语气',
+                question: 'If I ___ a bird, I would fly across the magical sky freely.',
+                options: ['am', 'was', 'were', 'had been'],
+                answer: 2,
+                explanation: '与现在事实相反的虚拟语气中，条件句If中的 be 动词不论主语单复数，统一使用 were。'
+            },
+
+            // 14. 倒装句与非谓语动词 (inversion_nonfinite)
+            {
+                id: 'q_inv_1',
+                topicId: 'inversion_nonfinite',
+                topic: '倒装句与非谓语动词',
+                question: 'Never ___ such an astonishing spell performance before.',
+                options: ['I have seen', 'have I seen', 'I saw', 'did I saw'],
+                answer: 1,
+                explanation: '否定副词 Never 位于句首时，句子需采用部分倒装结构（助动词/系动词前置于主语），故选 have I seen。'
+            },
+            {
+                id: 'q_inv_2',
+                topicId: 'inversion_nonfinite',
+                topic: '倒装句与非谓语动词',
+                question: '___ the bell ring, the students entered the wizard sanctuary.',
+                options: ['Heard', 'Hearing', 'To hear', 'Heard of'],
+                answer: 1,
+                explanation: '现在分词 Hearing 引导时间状语从句，主语 students 与 hear 是主动关系。'
+            }
+        ];
+
+        const grammarState = {
+            currentTab: 'lessons',
+            levelFilter: 'all',
+            expandedTopicId: 'parts_of_speech',
+            quizTopicFilter: 'all',
+            quizIndex: 0,
+            userAnswers: {},
+            quizScore: 0,
+            isAnswerSubmitted: false
+        };
+
+        function getFilteredQuizList() {
+            if (!grammarState.quizTopicFilter || grammarState.quizTopicFilter === 'all') {
+                return GRAMMAR_QUIZ;
+            }
+            return GRAMMAR_QUIZ.filter(q => q.topicId === grammarState.quizTopicFilter);
+        }
+
+        function onQuizTopicChange(val) {
+            grammarState.quizTopicFilter = val;
+            grammarState.quizIndex = 0;
+            renderGrammarQuiz();
+        }
+
+        function practiceGrammarTopic(topicId) {
+            grammarState.quizTopicFilter = topicId;
+            grammarState.quizIndex = 0;
+            
+            // Switch tab to quiz
+            grammarState.currentTab = 'quiz';
+            document.querySelectorAll('.grammar-nav-tab').forEach(t => {
+                const isQuiz = t.getAttribute('data-grammar-tab') === 'quiz';
+                if (isQuiz) {
+                    t.className = "grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-[#2c2c2e] shadow-sm font-bold";
+                } else {
+                    t.className = "grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-gray-400 dark:text-gray-500 font-bold";
+                }
+            });
+
+            document.querySelectorAll('.grammar-tab-panel').forEach(p => p.classList.add('hidden'));
+            const quizTab = document.getElementById('grammarTabQuiz');
+            if (quizTab) quizTab.classList.remove('hidden');
+
+            const selectEl = document.getElementById('quizTopicSelect');
+            if (selectEl) selectEl.value = topicId;
+
+            renderGrammarQuiz();
+        }
+
+        function openGrammarModal() {
+            const modal = document.getElementById('grammarLearningModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                setupGrammarModuleListeners();
+                renderGrammarTopics();
+                renderGrammarQuiz();
+            }
+        }
+
+        function closeGrammarModal() {
+            const modal = document.getElementById('grammarLearningModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function setupGrammarModuleListeners() {
+            // Tab switching
+            document.querySelectorAll('.grammar-nav-tab').forEach(tab => {
+                tab.replaceWith(tab.cloneNode(true));
+            });
+            document.querySelectorAll('.grammar-nav-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const targetTab = e.currentTarget.getAttribute('data-grammar-tab');
+                    grammarState.currentTab = targetTab;
+                    
+                    document.querySelectorAll('.grammar-nav-tab').forEach(t => {
+                        t.className = "grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-gray-400 dark:text-gray-500 font-bold";
+                    });
+                    e.currentTarget.className = "grammar-nav-tab flex-1 rounded-[9px] py-1 text-center transition-colors duration-200 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-[#2c2c2e] shadow-sm font-bold";
+
+                    document.querySelectorAll('.grammar-tab-panel').forEach(p => p.classList.add('hidden'));
+                    if (targetTab === 'lessons') {
+                        document.getElementById('grammarTabLessons').classList.remove('hidden');
+                    } else if (targetTab === 'quiz') {
+                        document.getElementById('grammarTabQuiz').classList.remove('hidden');
+                    } else if (targetTab === 'analyzer') {
+                        document.getElementById('grammarTabAnalyzer').classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Level filters
+            document.querySelectorAll('.grammar-level-btn').forEach(btn => {
+                btn.replaceWith(btn.cloneNode(true));
+            });
+            document.querySelectorAll('.grammar-level-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const filter = e.currentTarget.getAttribute('data-level-filter');
+                    grammarState.levelFilter = filter;
+                    document.querySelectorAll('.grammar-level-btn').forEach(b => {
+                        b.className = "grammar-level-btn px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/5 text-gray-500 dark:text-gray-400 font-bold";
+                    });
+                    e.currentTarget.className = "grammar-level-btn px-2 py-0.5 rounded-full bg-indigo-500 text-white shadow-xs font-bold";
+                    renderGrammarTopics();
+                });
+            });
+
+            // Sentence analyzer button
+            const analyzeBtn = document.getElementById('analyzeSentenceBtn');
+            if (analyzeBtn) {
+                analyzeBtn.onclick = () => {
+                    const input = document.getElementById('analyzerSentenceInput')?.value || '';
+                    analyzeSentenceGrammar(input);
+                };
+            }
+
+            const sampleBtn = document.getElementById('sampleSentenceBtn');
+            if (sampleBtn) {
+                sampleBtn.onclick = () => {
+                    const inputEl = document.getElementById('analyzerSentenceInput');
+                    if (inputEl) {
+                        inputEl.value = "The wizard who unlocked the ancient spellbook cast a powerful spell.";
+                        analyzeSentenceGrammar(inputEl.value);
+                    }
+                };
+            }
+
+            const nextBtn = document.getElementById('nextQuizBtn');
+            if (nextBtn) {
+                nextBtn.onclick = () => {
+                    const list = getFilteredQuizList();
+                    if (list.length > 0) {
+                        grammarState.quizIndex = (grammarState.quizIndex + 1) % list.length;
+                    }
+                    grammarState.isAnswerSubmitted = false;
+                    renderGrammarQuiz();
+                };
+            }
+        }
+
+        function renderGrammarTopics() {
+            const container = document.getElementById('grammarTopicsList');
+            if (!container) return;
+
+            const filtered = GRAMMAR_DATA.filter(topic => {
+                if (grammarState.levelFilter === 'all') return true;
+                return topic.category === grammarState.levelFilter;
+            });
+
+            container.innerHTML = filtered.map(topic => {
+                const isExpanded = grammarState.expandedTopicId === topic.id;
+                
+                return `
+                    <div class="bg-white dark:bg-[#2c2c2e] rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden transition-all shadow-sm">
+                        <!-- Card Header Trigger -->
+                        <div onclick="toggleGrammarTopic('${topic.id}')" class="p-3 flex items-center justify-between cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors select-none">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-xl flex-shrink-0">${topic.icon}</span>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <h3 class="text-xs font-bold text-gray-900 dark:text-white truncate">${escapeHtml(topic.title)}</h3>
+                                        <span class="text-[8px] font-black px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/15 flex-shrink-0">${topic.category}</span>
+                                    </div>
+                                    <p class="text-[9px] text-gray-500 dark:text-gray-400 truncate mt-0.5">${escapeHtml(topic.subtitle)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-400 transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}">▼</span>
+                        </div>
+
+                        <!-- Card Body Content -->
+                        ${isExpanded ? `
+                            <div class="px-3 pb-3 pt-1 border-t border-black/5 dark:border-white/5 space-y-2.5 animate-fade-in text-[10px]">
+                                <!-- Practice Action Banner -->
+                                <div class="flex items-center justify-between bg-indigo-500/10 dark:bg-indigo-500/20 p-2 rounded-xl border border-indigo-500/20">
+                                    <span class="text-[9px] font-bold text-indigo-700 dark:text-indigo-300">💡 已涵盖配套巩固练习题</span>
+                                    <button onclick="event.stopPropagation(); practiceGrammarTopic('${topic.id}')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[9px] transition-all active:scale-95 shadow-xs flex items-center gap-1">
+                                        ✏️ 练习此知识点
+                                    </button>
+                                </div>
+
+                                <!-- Formula Box -->
+                                <div class="p-2 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-xl border border-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-mono font-bold leading-relaxed">
+                                    <span class="block text-[8px] opacity-70 uppercase tracking-wide">💡 核心公式 / 核心结构</span>
+                                    ${escapeHtml(topic.formula)}
+                                </div>
+
+                                <!-- Overview -->
+                                <p class="text-gray-700 dark:text-gray-300 leading-relaxed font-medium">${escapeHtml(topic.overview)}</p>
+
+                                <!-- Rules List -->
+                                <div class="space-y-2">
+                                    ${topic.rules.map(rule => `
+                                        <div class="p-2 bg-black/[0.02] dark:bg-white/[0.03] rounded-xl border border-black/5 dark:border-white/5 space-y-1">
+                                            <span class="font-bold text-gray-900 dark:text-white flex items-center gap-1">
+                                                <span>📌 ${escapeHtml(rule.name)}</span>
+                                            </span>
+                                            <p class="text-gray-600 dark:text-gray-300 leading-normal">${escapeHtml(rule.detail)}</p>
+                                            <p class="text-amber-600 dark:text-amber-400 font-medium bg-amber-500/10 p-1.5 rounded-lg border border-amber-500/15 leading-tight">${escapeHtml(rule.trap)}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+
+                                <!-- Example Sentences -->
+                                <div class="space-y-1.5 pt-1">
+                                    <span class="font-bold text-indigo-600 dark:text-indigo-400 block text-[9px]">💬 经典真题例句:</span>
+                                    ${topic.examples.map(ex => `
+                                        <div class="p-2 bg-purple-500/5 dark:bg-purple-500/10 rounded-xl border border-purple-500/15 flex items-start justify-between gap-2">
+                                            <div class="space-y-0.5">
+                                                <p class="font-medium text-gray-900 dark:text-white italic select-text">${escapeHtml(ex.en)}</p>
+                                                <p class="text-gray-500 dark:text-gray-400 text-[9px]">${escapeHtml(ex.zh)}</p>
+                                            </div>
+                                            <button onclick="event.stopPropagation(); speakText('${escapeHtml(ex.en)}')" class="p-1.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-300 hover:bg-purple-500/20 active:scale-90 transition-all text-xs flex-shrink-0" title="播放朗读">
+                                                🔊
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleGrammarTopic(topicId) {
+            if (grammarState.expandedTopicId === topicId) {
+                grammarState.expandedTopicId = null;
+            } else {
+                grammarState.expandedTopicId = topicId;
+            }
+            renderGrammarTopics();
+        }
+
+        function renderGrammarQuiz() {
+            const topicTag = document.getElementById('quizTopicTag');
+            const indexText = document.getElementById('quizIndexText');
+            const questionText = document.getElementById('quizQuestionText');
+            const optionsList = document.getElementById('quizOptionsList');
+            const explanationBox = document.getElementById('quizExplanationBox');
+            const feedbackTitle = document.getElementById('quizFeedbackTitle');
+            const explanationText = document.getElementById('quizExplanationText');
+            const nextBtn = document.getElementById('nextQuizBtn');
+            const scoreBadge = document.getElementById('grammarScoreBadge');
+
+            if (!questionText || !optionsList) return;
+
+            const quizList = getFilteredQuizList();
+            if (quizList.length === 0) {
+                if (topicTag) topicTag.textContent = "暂无题目";
+                if (indexText) indexText.textContent = "Question 0/0";
+                questionText.textContent = "此知识点下暂无练习题，即将补充...";
+                optionsList.innerHTML = "";
+                if (explanationBox) explanationBox.classList.add('hidden');
+                if (nextBtn) nextBtn.classList.add('hidden');
+                return;
+            }
+
+            if (grammarState.quizIndex >= quizList.length) {
+                grammarState.quizIndex = 0;
+            }
+
+            const currentQ = quizList[grammarState.quizIndex];
+            if (!currentQ) return;
+
+            if (topicTag) topicTag.textContent = currentQ.topic;
+            if (indexText) indexText.textContent = `Question ${grammarState.quizIndex + 1}/${quizList.length}`;
+            if (questionText) questionText.textContent = currentQ.question;
+            if (scoreBadge) scoreBadge.textContent = `已答: ${grammarState.quizScore}/${GRAMMAR_QUIZ.length}`;
+
+            explanationBox?.classList.add('hidden');
+            nextBtn?.classList.add('hidden');
+
+            const userAnswer = grammarState.userAnswers[currentQ.id];
+
+            optionsList.innerHTML = currentQ.options.map((opt, idx) => {
+                let btnStyle = "w-full text-left p-2.5 rounded-xl border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.03] text-gray-800 dark:text-gray-100 font-medium text-xs hover:bg-indigo-500/10 transition-all active:scale-[0.99] flex items-center justify-between";
+                
+                if (userAnswer !== undefined) {
+                    if (idx === currentQ.answer) {
+                        btnStyle = "w-full text-left p-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-between";
+                    } else if (idx === userAnswer && userAnswer !== currentQ.answer) {
+                        btnStyle = "w-full text-left p-2.5 rounded-xl border border-rose-500/40 bg-rose-500/15 text-rose-700 dark:text-rose-300 font-bold text-xs flex items-center justify-between";
+                    }
+                }
+
+                return `
+                    <button onclick="handleQuizAnswer('${currentQ.id}', ${idx})" ${userAnswer !== undefined ? 'disabled' : ''} class="${btnStyle}">
+                        <span>${String.fromCharCode(65 + idx)}. ${escapeHtml(opt)}</span>
+                        ${userAnswer !== undefined ? (idx === currentQ.answer ? '<span>✅</span>' : (idx === userAnswer ? '<span>❌</span>' : '')) : ''}
+                    </button>
+                `;
+            }).join('');
+
+            if (userAnswer !== undefined) {
+                const isCorrect = userAnswer === currentQ.answer;
+                explanationBox.classList.remove('hidden');
+                explanationBox.className = isCorrect ? 
+                    "p-2.5 rounded-xl text-[10px] leading-relaxed border space-y-1 bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-200" : 
+                    "p-2.5 rounded-xl text-[10px] leading-relaxed border space-y-1 bg-rose-500/10 border-rose-500/20 text-rose-800 dark:text-rose-200";
+                
+                if (feedbackTitle) feedbackTitle.innerHTML = isCorrect ? "🎉 回答正确！魔力 +15" : "⚠️ 需再接再厉解析";
+                if (explanationText) explanationText.textContent = currentQ.explanation;
+
+                if (nextBtn) nextBtn.classList.remove('hidden');
+            }
+        }
+
+        function handleQuizAnswer(questionId, selectedIdx) {
+            const quizList = getFilteredQuizList();
+            const currentQ = quizList.find(q => q.id === questionId) || quizList[grammarState.quizIndex];
+            if (!currentQ || grammarState.userAnswers[currentQ.id] !== undefined) return;
+
+            grammarState.userAnswers[currentQ.id] = selectedIdx;
+            const isCorrect = selectedIdx === currentQ.answer;
+
+            if (isCorrect) {
+                grammarState.quizScore++;
+                playSound('success');
+                addExp(15);
+                state.wizard.stars += 1;
+                saveWizardState();
+                updateWizardUI();
+            } else {
+                playSound('wrong');
+            }
+
+            renderGrammarQuiz();
+        }
+
+        function analyzeSentenceGrammar(sentence) {
+            const resultBox = document.getElementById('analyzerResultBox');
+            const tagsContainer = document.getElementById('componentTagsContainer');
+            const diagnosticList = document.getElementById('analyzerDiagnosticList');
+
+            if (!resultBox || !tagsContainer || !diagnosticList) return;
+
+            const text = (sentence || '').trim();
+            if (!text) {
+                showToast("⚠️ 请先输入有效英文句子");
+                return;
+            }
+
+            resultBox.classList.remove('hidden');
+            tagsContainer.innerHTML = "";
+            diagnosticList.innerHTML = "";
+
+            const words = text.split(/\s+/);
+
+            // POS & Component Breakdown Engine
+            const tagged = words.map(w => {
+                const clean = w.replace(/[^a-zA-Z]/g, '');
+                const lowerClean = clean.toLowerCase();
+                let role = '未知成分';
+                let bg = 'bg-gray-500/15 text-gray-700 dark:text-gray-300 border-gray-500/20';
+
+                if (['a', 'an', 'the', 'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'their'].includes(lowerClean)) {
+                    role = '冠/限定词 (Det)';
+                    bg = 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/20';
+                } else if (['who', 'which', 'that', 'whom', 'whose', 'where', 'when'].includes(lowerClean)) {
+                    role = '关系/引导词 (Rel)';
+                    bg = 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/20';
+                } else if (['is', 'are', 'am', 'was', 'were', 'be', 'been', 'being', 'cast', 'unlock', 'unlocked', 'study', 'studied', 'run', 'play', 'sing', 'sings', 'work', 'works', 'relies', 'bought', 'have', 'has', 'had', 'will', 'can', 'could', 'would', 'should'].includes(lowerClean)) {
+                    role = '谓语/动词 (Verb)';
+                    bg = 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20';
+                } else if (['in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'about', 'across', 'through'].includes(lowerClean)) {
+                    role = '介词 (Prep)';
+                    bg = 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/20';
+                } else if (['beautiful', 'ancient', 'powerful', 'new', 'great', 'useful', 'hard', 'famous'].includes(lowerClean)) {
+                    role = '定语/形容词 (Adj)';
+                    bg = 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/20';
+                } else if (['wizard', 'spellbook', 'spell', 'student', 'sanctuary', 'book', 'competition', 'badge', 'home', 'park', 'novel', 'author', 'bird', 'sky', 'advice', 'grammar', 'beijing', 'london'].includes(lowerClean)) {
+                    role = '主/宾/表名词 (Noun)';
+                    bg = 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/20';
+                } else if (['he', 'she', 'it', 'i', 'you', 'we', 'they'].includes(lowerClean)) {
+                    role = '主语代词 (Pronoun)';
+                    bg = 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/20';
+                } else if (['yesterday', 'tomorrow', 'today', 'very', 'well', 'daily', 'freely'].includes(lowerClean)) {
+                    role = '状语/副词 (Adv)';
+                    bg = 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/20';
+                }
+
+                return { word: w, role, bg };
+            });
+
+            tagsContainer.innerHTML = tagged.map(item => `
+                <span class="px-2 py-1 rounded-lg border ${item.bg} text-[9px] font-bold flex flex-col items-center">
+                    <span>${escapeHtml(item.word)}</span>
+                    <span class="text-[7px] opacity-75 font-normal">${item.role}</span>
+                </span>
+            `).join('');
+
+            // Syntactic Diagnostics Engine
+            const diagnostics = [];
+
+            // 1. Tense Detection
+            if (/\b(has|have)\s+[a-z]+ed\b/i.test(text) || /\b(has|have)\s+(been|gone|seen|done|written)\b/i.test(text)) {
+                diagnostics.push({ icon: '🎯', title: '现在完成时 (Present Perfect)', desc: '发现 "have/has + 过去分词"，表示动作对现在造成影响或延续至今。' });
+            } else if (/\b(was|were|did|unlocked|bought|wrote|saw)\b/i.test(text) || /\b[a-z]+ed\b/i.test(text)) {
+                diagnostics.push({ icon: '⏳', title: '一般过去时 (Simple Past)', desc: '检测到过去式动词，句式描述发生在过去的事情。' });
+            } else if (/\b(will|be going to)\b/i.test(text)) {
+                diagnostics.push({ icon: '🚀', title: '一般将来时 (Simple Future)', desc: '包含将来时助动词 will/be going to，预测或表达将来意图。' });
+            } else {
+                diagnostics.push({ icon: '☀️', title: '一般现在时 (Simple Present)', desc: '表达经常性事实、习惯或客观规律。' });
+            }
+
+            // 2. Clause Analysis
+            if (/\b(who|which|that|where|when)\b/i.test(text)) {
+                diagnostics.push({ icon: '🔗', title: '定语从句 (Attributive Clause)', desc: '识别到关系词 (who/which/that/where)，用于修饰前面的先行词。' });
+            }
+
+            if (/\bif\b/i.test(text)) {
+                diagnostics.push({ icon: '🔀', title: '条件状语从句 (Conditional Clause)', desc: '包含条件连词 If，遵循“主将从现”或虚拟语气结构。' });
+            }
+
+            // 3. Passive Voice
+            if (/\b(is|are|was|were|been)\s+[a-z]+ed\b/i.test(text) || /\b(was|were)\s+(written|given|seen|cast|published)\b/i.test(text)) {
+                diagnostics.push({ icon: '🛡️', title: '被动语态 (Passive Voice)', desc: '使用了 be + 过去分词结构，强调动作承受对象。' });
+            }
+
+            // 4. Interrogative Sentence Detection
+            if (/\?$/.test(text) || /^(what|where|when|why|who|whose|which|how|do|does|did|is|are|can|could|would|will)\b/i.test(text)) {
+                if (/^(what|where|when|why|who|whose|which|how)\b/i.test(text)) {
+                    diagnostics.push({ icon: '❓', title: '特殊疑问句 (Special Question)', desc: '由特殊疑问词 (Wh-词/How) 开头，寻求具体细节或信息。' });
+                } else {
+                    diagnostics.push({ icon: '❓', title: '一般疑问句 (General Question)', desc: '由助动词/Be动词/情态动词开头或带有问号，可用 Yes/No 回答。' });
+                }
+            }
+
+            diagnosticList.innerHTML = diagnostics.map(d => `
+                <div class="p-2 bg-black/[0.02] dark:bg-white/[0.03] rounded-xl border border-black/5 dark:border-white/5 flex items-start gap-2">
+                    <span class="text-base flex-shrink-0">${d.icon}</span>
+                    <div>
+                        <span class="font-bold text-gray-900 dark:text-white block">${escapeHtml(d.title)}</span>
+                        <p class="text-gray-600 dark:text-gray-300 text-[9px] mt-0.5">${escapeHtml(d.desc)}</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
         init();

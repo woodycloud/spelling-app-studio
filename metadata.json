@@ -1,6 +1,6 @@
 {
   "name": "Xinyi SpellQuest",
-  "description": "An interactive, iOS-style English spelling quest and vocabulary flashcard application for students and kids.",
+  "description": "An interactive, iOS-style English spelling quest, grammar learning, and vocabulary flashcard application with spaced repetition and gamification.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
