@@ -1134,11 +1134,29 @@
 
         function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
+                const doRegister = () => {
                     navigator.serviceWorker.register('./sw.js')
-                        .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                        .then(reg => {
+                            console.log('Service Worker registered successfully:', reg.scope);
+                            reg.addEventListener('updatefound', () => {
+                                const newWorker = reg.installing;
+                                if (newWorker) {
+                                    newWorker.addEventListener('statechange', () => {
+                                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                            console.log('[SW] New version detected; ready for update.');
+                                        }
+                                    });
+                                }
+                            });
+                        })
                         .catch(err => console.log('Service Worker registration failed:', err));
-                });
+                };
+
+                if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                    doRegister();
+                } else {
+                    window.addEventListener('load', doRegister);
+                }
             }
         }
 
@@ -2811,7 +2829,8 @@
             const word = getCurrentWordObject()?.word;
             if (!word) return;
             getAudioContext(); 
-            const accent = document.querySelector('input[name="accentType"]:checked').value;
+            const accentRadio = document.querySelector('input[name="accentType"]:checked');
+            const accent = accentRadio ? accentRadio.value : '2';
             const targetSrc = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${accent}`;
             
             // iOS Safari optimization: do not re-assign src if already set to correct pronunciation.
@@ -2819,7 +2838,14 @@
             if (!el.audio.src.includes(encodeURIComponent(word)) || !el.audio.src.includes(`type=${accent}`)) {
                 el.audio.src = targetSrc;
             }
-            el.audio.play().catch(()=>{});
+            el.audio.play().catch(() => {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(word);
+                    u.lang = accent === '1' ? 'en-GB' : 'en-US';
+                    window.speechSynthesis.speak(u);
+                }
+            });
         }
 
         function renderVirtualKeyboard() {
@@ -4836,8 +4862,22 @@
                 const accent = accentRadio ? accentRadio.value : '2';
                 const targetSrc = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
                 el.audio.src = targetSrc;
-                el.audio.play().catch(() => {});
-            } catch(e) {}
+                el.audio.play().catch(() => {
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        const u = new SpeechSynthesisUtterance(text);
+                        u.lang = accent === '1' ? 'en-GB' : 'en-US';
+                        window.speechSynthesis.speak(u);
+                    }
+                });
+            } catch(e) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(text);
+                    u.lang = 'en-US';
+                    window.speechSynthesis.speak(u);
+                }
+            }
         }
 
         const GRAMMAR_DATA = [
