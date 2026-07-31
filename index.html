@@ -932,6 +932,8 @@
             isReviewMode: false,
             isVocabMode: false,
             isEbbinghausMode: false,
+            ebbinghausWords: [],
+            ebbinghausInitialCount: 0,
             imgRetryCount: 0,
             touch: { x: 0, y: 0 },
             isTrans: false,
@@ -1425,6 +1427,7 @@
                 if (state.isEbbinghausMode) {
                     triggerEpicFireworks();
                     state.isEbbinghausMode = false;
+                    state.ebbinghausWords = [];
                     showToast("🎉 艾宾浩斯遗忘曲线复习完毕！");
                 } else if (state.isReviewMode) {
                     triggerEpicFireworks();
@@ -1627,6 +1630,7 @@
                         localStorage.setItem('spell_saved_vocab_book', JSON.stringify(state.vocabWords));
                         updateReinforcementCounts();
                     } else if (state.isEbbinghausMode) {
+                        if (state.ebbinghausWords) state.ebbinghausWords.splice(state.currentIndex, 1);
                         updateReinforcementCounts();
                     } else {
                         state.currentIndex++;
@@ -1648,6 +1652,10 @@
                 }
                 // Update Ebbinghaus state on failure
                 updateEbbinghausState(bank[state.currentIndex], false);
+                if (state.isEbbinghausMode && state.ebbinghausWords && state.ebbinghausWords.length > 1) {
+                    const item = state.ebbinghausWords.splice(state.currentIndex, 1)[0];
+                    if (item) state.ebbinghausWords.push(item);
+                }
                 setTimeout(() => {
                     el.cardInner.classList.remove('shake');
                     state.currentInputValue = "";
@@ -2902,6 +2910,10 @@
             const currentItem = bank[state.currentIndex];
             if (level === 'again') {
                 if (state.isEbbinghausMode) {
+                    if (state.ebbinghausWords && state.ebbinghausWords.length > 1) {
+                        const item = state.ebbinghausWords.splice(state.currentIndex, 1)[0];
+                        if (item) state.ebbinghausWords.push(item);
+                    }
                     updateEbbinghausState(currentItem, false);
                 } else {
                     const item = bank.splice(state.currentIndex, 1)[0];
@@ -2912,7 +2924,9 @@
                 el.cardInner.classList.add('shake');
                 setTimeout(() => el.cardInner.classList.remove('shake'), 450);
             } else if (level === 'good') {
-                if (!state.isEbbinghausMode) {
+                if (state.isEbbinghausMode) {
+                    if (state.ebbinghausWords) state.ebbinghausWords.splice(state.currentIndex, 1);
+                } else {
                     state.currentIndex++;
                 }
                 addExp(5);
@@ -2932,7 +2946,7 @@
                     bank.splice(state.currentIndex, 1);
                     localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
                 } else if (state.isEbbinghausMode) {
-                    // updateEbbinghausState with true, true updates nextReview to future so due list shrinks automatically
+                    if (state.ebbinghausWords) state.ebbinghausWords.splice(state.currentIndex, 1);
                 } else {
                     bank.splice(state.currentIndex, 1);
                 }
@@ -2967,6 +2981,7 @@
                         } else if (state.isEbbinghausMode) {
                             showToast("🎉 艾宾浩斯复习完毕！");
                             state.isEbbinghausMode = false;
+                            state.ebbinghausWords = [];
                         } else {
                             showToast("🎉 全部掌握！");
                             resetAllProgress();
@@ -3006,8 +3021,20 @@
 
         function updateProgress() {
             const bank = getCurrentWordBank();
-            const total = bank.length + state.masteredWords.size;
             let percent = 0;
+
+            if (state.isEbbinghausMode) {
+                const total = state.ebbinghausInitialCount || (bank ? bank.length : 1);
+                const remaining = bank ? bank.length : 0;
+                percent = total ? Math.max(0, Math.min(100, Math.round(((total - remaining) / total) * 100))) : 100;
+                const pStr = `${percent}%`;
+                el.progressBar.style.width = pStr;
+                el.progressText.textContent = `艾宾浩斯复习: ${pStr} (余 ${remaining})`;
+                el.navProgress.textContent = pStr;
+                return;
+            }
+
+            const total = bank.length + state.masteredWords.size;
 
             if (state.mode === 'spell') {
                 percent = bank.length ? Math.round((state.currentIndex / bank.length) * 100) : 100;
@@ -3419,7 +3446,10 @@
         
         function getCurrentWordBank() {
             if (state.isEbbinghausMode) {
-                return getEbbinghausDueWords();
+                if (!state.ebbinghausWords || state.ebbinghausWords.length === 0) {
+                    state.ebbinghausWords = getEbbinghausDueWords();
+                }
+                return state.ebbinghausWords;
             } else if (state.isReviewMode) {
                 return state.wrongWords;
             } else if (state.isVocabMode) {
@@ -3480,11 +3510,13 @@
                 showToast("🧠 暂时没有到期的艾宾浩斯复习单词，太优秀了！");
                 return;
             }
+            state.ebbinghausWords = [...dueWords];
+            state.ebbinghausInitialCount = dueWords.length;
             state.isEbbinghausMode = true;
             state.isReviewMode = false;
             state.isVocabMode = false;
             state.currentIndex = 0;
-            showToast("🧠 进入艾宾浩斯强化复习");
+            showToast(`🧠 进入艾宾浩斯强化复习 (${dueWords.length} 个待复习)`);
             showCurrentWord();
         }
 
@@ -3496,6 +3528,7 @@
             state.isReviewMode = true;
             state.isVocabMode = false;
             state.isEbbinghausMode = false;
+            state.ebbinghausWords = [];
             state.currentIndex = 0;
             showCurrentWord();
         }
@@ -3508,6 +3541,7 @@
             state.isVocabMode = true;
             state.isReviewMode = false;
             state.isEbbinghausMode = false;
+            state.ebbinghausWords = [];
             state.currentIndex = 0;
             showCurrentWord();
         }
@@ -3516,6 +3550,7 @@
             state.isReviewMode = false;
             state.isVocabMode = false;
             state.isEbbinghausMode = false;
+            state.ebbinghausWords = [];
             state.currentIndex = parseInt(localStorage.getItem('spell_saved_index') || 0);
             showToast("🚪 已返回正常冒险");
             showCurrentWord();
