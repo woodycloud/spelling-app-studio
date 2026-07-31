@@ -1550,7 +1550,7 @@
 
         function check() {
             if (state.mode !== 'spell' || state.isTrans) return;
-            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
+            const bank = getCurrentWordBank();
             
             if (!bank || state.currentIndex >= bank.length || !bank[state.currentIndex]) {
                 return;
@@ -1572,6 +1572,9 @@
                     starsGained = 2;
                 } else if (state.isVocabMode) {
                     expGained = 15; // Extra reward for vocab training
+                    starsGained = 2;
+                } else if (state.isEbbinghausMode) {
+                    expGained = 20; // Extra reward for Ebbinghaus review
                     starsGained = 2;
                 }
                 
@@ -1597,7 +1600,7 @@
                 try {
                     let nextIdx = state.currentIndex;
                     let tempBank = [...bank];
-                    if (state.isReviewMode || state.isVocabMode) {
+                    if (state.isReviewMode || state.isVocabMode || state.isEbbinghausMode) {
                         tempBank.splice(state.currentIndex, 1);
                     } else {
                         nextIdx = state.currentIndex + 1;
@@ -1623,6 +1626,8 @@
                         state.vocabWords.splice(state.currentIndex, 1);
                         localStorage.setItem('spell_saved_vocab_book', JSON.stringify(state.vocabWords));
                         updateReinforcementCounts();
+                    } else if (state.isEbbinghausMode) {
+                        updateReinforcementCounts();
                     } else {
                         state.currentIndex++;
                     }
@@ -1633,7 +1638,7 @@
                 state.isTrans = true;
                 playSound('error');
                 el.cardInner.classList.add('shake');
-                if (!state.isReviewMode && !state.isVocabMode) {
+                if (!state.isReviewMode && !state.isVocabMode && !state.isEbbinghausMode) {
                     const exists = state.wrongWords.some(w => w.word === bank[state.currentIndex].word);
                     if (!exists) {
                         state.wrongWords.push(bank[state.currentIndex]);
@@ -2866,8 +2871,8 @@
 
         function handleAnkiFeedback(level) {
             if (state.isTrans) return;
-            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
-            if (bank.length === 0) return;
+            const bank = getCurrentWordBank();
+            if (!bank || bank.length === 0) return;
 
             state.isTrans = true;
 
@@ -2877,9 +2882,9 @@
                 let tempBank = [...bank];
                 if (level === 'again') {
                     const item = tempBank.splice(state.currentIndex, 1)[0];
-                    tempBank.push(item);
+                    if (item) tempBank.push(item);
                 } else if (level === 'good') {
-                    nextIdx = state.currentIndex + 1;
+                    if (!state.isEbbinghausMode) nextIdx = state.currentIndex + 1;
                 } else if (level === 'easy') {
                     tempBank.splice(state.currentIndex, 1);
                 }
@@ -2896,15 +2901,20 @@
 
             const currentItem = bank[state.currentIndex];
             if (level === 'again') {
-                const item = bank.splice(state.currentIndex, 1)[0];
-                bank.push(item);
+                if (state.isEbbinghausMode) {
+                    updateEbbinghausState(currentItem, false);
+                } else {
+                    const item = bank.splice(state.currentIndex, 1)[0];
+                    if (item) bank.push(item);
+                    updateEbbinghausState(currentItem, false);
+                }
                 playSound('error');
                 el.cardInner.classList.add('shake');
                 setTimeout(() => el.cardInner.classList.remove('shake'), 450);
-                
-                updateEbbinghausState(currentItem, false);
             } else if (level === 'good') {
-                state.currentIndex++;
+                if (!state.isEbbinghausMode) {
+                    state.currentIndex++;
+                }
                 addExp(5);
                 
                 markWordAsMastered(currentItem.word);
@@ -2921,6 +2931,8 @@
                 } else if (state.isReviewMode) {
                     bank.splice(state.currentIndex, 1);
                     localStorage.setItem('spell_saved_wrong_words', JSON.stringify(state.wrongWords));
+                } else if (state.isEbbinghausMode) {
+                    // updateEbbinghausState with true, true updates nextReview to future so due list shrinks automatically
                 } else {
                     bank.splice(state.currentIndex, 1);
                 }
@@ -2943,7 +2955,8 @@
             setTimeout(() => {
                 el.cardInner.classList.remove('is-flipped');
                 setTimeout(() => {
-                    if (bank.length === 0) {
+                    const currentBank = getCurrentWordBank();
+                    if (currentBank.length === 0) {
                         triggerEpicFireworks();
                         if (state.isReviewMode) {
                             showToast("🎉 错词消灭干净！");
@@ -2951,13 +2964,16 @@
                         } else if (state.isVocabMode) {
                             showToast("🎉 生词本消灭干净！");
                             state.isVocabMode = false;
+                        } else if (state.isEbbinghausMode) {
+                            showToast("🎉 艾宾浩斯复习完毕！");
+                            state.isEbbinghausMode = false;
                         } else {
                             showToast("🎉 全部掌握！");
                             resetAllProgress();
                         }
                         showCurrentWord();
                     } else {
-                        if (state.currentIndex >= bank.length) state.currentIndex = 0;
+                        if (state.currentIndex >= currentBank.length) state.currentIndex = 0;
                         showCurrentWord();
                     }
                     state.isTrans = false;
@@ -2989,7 +3005,7 @@
         }
 
         function updateProgress() {
-            const bank = state.isReviewMode ? state.wrongWords : (state.isVocabMode ? state.vocabWords : state.wordBank);
+            const bank = getCurrentWordBank();
             const total = bank.length + state.masteredWords.size;
             let percent = 0;
 
