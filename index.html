@@ -657,8 +657,8 @@
     </div>
 
     <!-- Course Selection Page (Apple iOS Bottom Sheet style modal) -->
-    <div id="courseSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/85 backdrop-blur-md hidden p-3 overflow-y-auto animate-fade-in">
-        <div class="bg-[#f2f2f7] dark:bg-[#1c1c1e] border border-black/10 dark:border-white/10 rounded-[32px] w-full max-w-sm text-center shadow-2xl relative overflow-hidden flex flex-col h-[85vh] max-h-[640px] my-auto animate-scale-up">
+    <div id="courseSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/85 backdrop-blur-md hidden p-3 sm:p-4 md:p-6 overflow-y-auto animate-fade-in">
+        <div class="bg-[#f2f2f7] dark:bg-[#1c1c1e] border border-black/10 dark:border-white/10 rounded-[32px] w-full max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-3xl text-center shadow-2xl relative overflow-hidden flex flex-col h-[88vh] max-h-[680px] my-auto animate-scale-up">
             
             <!-- Drag handle to simulate iOS Sheet -->
             <div class="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-2.5 mb-1.5 flex-shrink-0"></div>
@@ -667,33 +667,64 @@
             <button id="closeCourseSelectionBtn" class="absolute top-3.5 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white bg-black/5 dark:bg-white/10 active:scale-90 w-9 h-9 flex items-center justify-center rounded-full transition-all text-sm font-bold z-50">✕</button>
 
             <!-- Header -->
-            <div class="relative z-10 flex flex-col items-center px-4 pb-2">
-                <h2 class="text-sm font-black text-gray-900 dark:text-white flex items-center gap-1">📚 魔法课程库</h2>
-                <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium">选择你感兴趣的词库开展拼读冒险</p>
+            <div class="relative z-10 flex flex-col items-center px-4 sm:px-6 pb-2">
+                <h2 class="text-sm sm:text-base font-black text-gray-900 dark:text-white flex items-center gap-1.5">📚 魔法课程库</h2>
+                <p class="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium">选择你感兴趣的词库分类开展拼读冒险</p>
             </div>
 
             <!-- Search input -->
-            <div class="px-4 mb-2 flex-shrink-0">
-                <div class="relative flex items-center bg-white dark:bg-[#2c2c2e] px-2.5 py-1.5 rounded-xl border border-black/[0.04] dark:border-white/[0.04] shadow-sm">
-                    <span class="text-[10px] text-gray-400 mr-1.5">🔍</span>
-                    <input id="courseSearchInput" type="text" placeholder="搜索课程或单元..." class="w-full bg-transparent text-[10px] text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-medium">
-                    <button id="clearCourseSearchBtn" class="text-[9px] text-gray-400 hover:text-gray-600 dark:hover:text-white hidden">✕</button>
+            <div class="px-4 sm:px-6 mb-3 flex-shrink-0">
+                <div class="relative flex items-center bg-white dark:bg-[#2c2c2e] px-3 py-2 rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm">
+                    <span class="text-xs text-gray-400 mr-2">🔍</span>
+                    <input id="courseSearchInput" type="text" placeholder="搜索课程或单元..." class="w-full bg-transparent text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-medium">
+                    <button id="clearCourseSearchBtn" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-white hidden">✕</button>
                 </div>
             </div>
 
-            <!-- Segmented Category Tab Bar -->
-            <div class="px-4 mb-3 flex-shrink-0">
-                <div class="relative flex bg-black/[0.05] dark:bg-white/[0.05] p-0.5 rounded-xl h-[30px] items-center">
-                    <div id="course-category-indicator" class="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(33.333%-2px)] bg-white dark:bg-[#2c2c2e] rounded-[9px] shadow-sm transition-all duration-300 ease-out z-0"></div>
-                    <button data-group="newConcept" class="course-category-tab flex-1 rounded-[9px] font-black text-[9px] py-1 transition-colors duration-200 text-gray-900 dark:text-white relative z-10">🎒 新概念</button>
-                    <button data-group="schoolClass" class="course-category-tab flex-1 rounded-[9px] font-semibold text-[9px] py-1 transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">🏫 课堂组</button>
-                    <button data-group="ieltsClass" class="course-category-tab flex-1 rounded-[9px] font-semibold text-[9px] py-1 transition-colors duration-200 text-gray-400 dark:text-gray-500 relative z-10">🗽 雅思词</button>
+            <!-- Unit Categories Grid Header -->
+            <div class="px-4 sm:px-6 mb-3 flex-shrink-0">
+                <div id="courseCategoryGrid" class="grid grid-cols-3 gap-2 sm:gap-3">
+                    <!-- Category 1: New Concept -->
+                    <button data-group="newConcept" class="course-category-tab group relative flex flex-col sm:flex-row items-center text-center sm:text-left p-2 sm:p-3 rounded-2xl border transition-all duration-200 cursor-pointer active:scale-95 shadow-xs">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm sm:text-lg font-extrabold flex-shrink-0 mb-1 sm:mb-0 sm:mr-3 transition-transform group-hover:scale-105">🎒</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-center sm:justify-start gap-1">
+                                <span class="text-[10px] sm:text-xs font-black text-gray-800 dark:text-gray-100 category-title">新概念英语</span>
+                            </div>
+                            <p class="hidden sm:block text-[9.5px] text-gray-400 dark:text-gray-500 font-semibold truncate mt-0.5">10 单元 · 经典基础</p>
+                        </div>
+                        <span class="category-active-badge absolute -top-1 -right-1 sm:top-2 sm:right-2 text-[8px] sm:text-[9px] bg-blue-500 text-white font-black px-1.5 py-0.5 rounded-full shadow-xs opacity-0 transition-opacity">已选</span>
+                    </button>
+
+                    <!-- Category 2: School Class -->
+                    <button data-group="schoolClass" class="course-category-tab group relative flex flex-col sm:flex-row items-center text-center sm:text-left p-2 sm:p-3 rounded-2xl border transition-all duration-200 cursor-pointer active:scale-95 shadow-xs">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm sm:text-lg font-extrabold flex-shrink-0 mb-1 sm:mb-0 sm:mr-3 transition-transform group-hover:scale-105">🏫</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-center sm:justify-start gap-1">
+                                <span class="text-[10px] sm:text-xs font-black text-gray-800 dark:text-gray-100 category-title">课堂同步组</span>
+                            </div>
+                            <p class="hidden sm:block text-[9.5px] text-gray-400 dark:text-gray-500 font-semibold truncate mt-0.5">11 单元 · 教材强化</p>
+                        </div>
+                        <span class="category-active-badge absolute -top-1 -right-1 sm:top-2 sm:right-2 text-[8px] sm:text-[9px] bg-amber-500 text-white font-black px-1.5 py-0.5 rounded-full shadow-xs opacity-0 transition-opacity">已选</span>
+                    </button>
+
+                    <!-- Category 3: IELTS Class -->
+                    <button data-group="ieltsClass" class="course-category-tab group relative flex flex-col sm:flex-row items-center text-center sm:text-left p-2 sm:p-3 rounded-2xl border transition-all duration-200 cursor-pointer active:scale-95 shadow-xs">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm sm:text-lg font-extrabold flex-shrink-0 mb-1 sm:mb-0 sm:mr-3 transition-transform group-hover:scale-105">🗽</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-center sm:justify-start gap-1">
+                                <span class="text-[10px] sm:text-xs font-black text-gray-800 dark:text-gray-100 category-title">雅思高频词</span>
+                            </div>
+                            <p class="hidden sm:block text-[9.5px] text-gray-400 dark:text-gray-500 font-semibold truncate mt-0.5">8 大主题 · 备考专刷</p>
+                        </div>
+                        <span class="category-active-badge absolute -top-1 -right-1 sm:top-2 sm:right-2 text-[8px] sm:text-[9px] bg-purple-500 text-white font-black px-1.5 py-0.5 rounded-full shadow-xs opacity-0 transition-opacity">已选</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Scrolling Unit List -->
-            <div class="flex-1 overflow-y-auto px-4 pb-4">
-                <div id="courseUnitList" class="flex flex-col gap-1.5">
+            <!-- Scrolling Unit List Grid -->
+            <div class="flex-1 overflow-y-auto px-4 sm:px-6 pb-4">
+                <div id="courseUnitList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
                     <!-- Units render dynamically here -->
                 </div>
             </div>
@@ -3312,23 +3343,27 @@
         function switchCourseTab(group) {
             courseActiveTab = group;
             const tabs = document.querySelectorAll('.course-category-tab');
-            const indicator = document.getElementById('course-category-indicator');
             
-            let index = 0;
-            tabs.forEach((tab, i) => {
+            tabs.forEach(tab => {
                 const isMatch = tab.getAttribute('data-group') === group;
-                tab.classList.toggle('font-black', isMatch);
-                tab.classList.toggle('text-gray-900', isMatch);
-                tab.classList.toggle('dark:text-white', isMatch);
-                tab.classList.toggle('font-semibold', !isMatch);
-                tab.classList.toggle('text-gray-400', !isMatch);
-                tab.classList.toggle('dark:text-gray-500', !isMatch);
-                if (isMatch) index = i;
+                const activeBadge = tab.querySelector('.category-active-badge');
+                
+                if (isMatch) {
+                    tab.classList.remove('bg-white/70', 'dark:bg-white/5', 'border-black/5', 'dark:border-white/10');
+                    tab.classList.add('bg-white', 'dark:bg-[#2c2c2e]', 'border-blue-500', 'dark:border-blue-400', 'ring-2', 'ring-blue-500/20', 'shadow-md');
+                    if (activeBadge) {
+                        activeBadge.classList.remove('opacity-0');
+                        activeBadge.classList.add('opacity-100');
+                    }
+                } else {
+                    tab.classList.remove('bg-white', 'dark:bg-[#2c2c2e]', 'border-blue-500', 'dark:border-blue-400', 'ring-2', 'ring-blue-500/20', 'shadow-md');
+                    tab.classList.add('bg-white/70', 'dark:bg-white/5', 'border-black/5', 'dark:border-white/10');
+                    if (activeBadge) {
+                        activeBadge.classList.remove('opacity-100');
+                        activeBadge.classList.add('opacity-0');
+                    }
+                }
             });
-
-            if (indicator) {
-                indicator.style.transform = `translateX(${index * 100}%)`;
-            }
 
             renderCourseUnitsList();
         }
