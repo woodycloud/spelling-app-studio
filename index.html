@@ -669,15 +669,31 @@
             <!-- Header -->
             <div class="relative z-10 flex flex-col items-center px-4 sm:px-6 pb-2">
                 <h2 class="text-sm sm:text-base font-black text-gray-900 dark:text-white flex items-center gap-1.5">📚 魔法课程库</h2>
-                <p class="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium">选择你感兴趣的词库分类开展拼读冒险</p>
+                <p class="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium">支持勾选多个单元，在拼读与卡片练习中进行多选合并学习</p>
             </div>
 
             <!-- Search input -->
-            <div class="px-4 sm:px-6 mb-3 flex-shrink-0">
+            <div class="px-4 sm:px-6 mb-2 flex-shrink-0">
                 <div class="relative flex items-center bg-white dark:bg-[#2c2c2e] px-3 py-2 rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm">
                     <span class="text-xs text-gray-400 mr-2">🔍</span>
                     <input id="courseSearchInput" type="text" placeholder="搜索课程或单元..." class="w-full bg-transparent text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none font-medium">
                     <button id="clearCourseSearchBtn" class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-white hidden">✕</button>
+                </div>
+            </div>
+
+            <!-- Multi-select Action Bar -->
+            <div class="px-4 sm:px-6 mb-2.5 flex items-center justify-between text-[10px] flex-shrink-0">
+                <div class="flex items-center gap-1.5 font-bold text-gray-700 dark:text-gray-300">
+                    <span id="multiSelectCounter" class="bg-[#007aff]/15 text-[#007aff] dark:text-[#0a84ff] px-2 py-0.5 rounded-full text-[9px] font-black">已选 0 个单元</span>
+                    <span id="multiSelectWordEstimate" class="text-gray-400 text-[9px]">~0 词</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="selectAllCategoryBtn" class="text-blue-600 dark:text-blue-400 font-bold hover:underline bg-blue-500/10 dark:bg-blue-500/15 px-2 py-0.5 rounded-lg transition-all active:scale-95 text-[9px]">
+                        ☑️ 全选本页
+                    </button>
+                    <button id="clearSelectionBtn" class="text-gray-500 dark:text-gray-400 hover:text-red-500 bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded-lg transition-all active:scale-95 text-[9px]">
+                        🧹 清空
+                    </button>
                 </div>
             </div>
 
@@ -729,11 +745,14 @@
                 </div>
             </div>
 
-            <!-- Footer: Reset progress option -->
-            <div class="bg-black/[0.02] dark:bg-white/[0.02] border-t border-black/5 dark:border-white/5 p-3 flex-shrink-0 flex items-center justify-between">
-                <span class="text-[8px] text-gray-400">选择完点击即可开始拼读冒险哦！</span>
-                <button id="modalResetProgressBtn" class="text-[9px] font-bold text-red-500 hover:text-red-600 flex items-center gap-0.5 bg-red-500/10 hover:bg-red-500/15 px-2.5 py-1 rounded-lg transition-all active:scale-95">
-                    <span>🔄</span> 重置当前进度
+            <!-- Footer: Multi-Select Start Action & Reset progress option -->
+            <div class="bg-white/90 dark:bg-[#2c2c2e]/90 backdrop-blur-md border-t border-black/5 dark:border-white/5 p-3 flex-shrink-0 flex items-center justify-between gap-3">
+                <button id="modalResetProgressBtn" class="text-[9px] font-bold text-red-500 hover:text-red-600 flex items-center gap-0.5 bg-red-500/10 hover:bg-red-500/15 px-2.5 py-2 rounded-xl transition-all active:scale-95 flex-shrink-0" title="重置已选单元的保存进度">
+                    <span>🔄</span> 重置进度
+                </button>
+                <button id="confirmMultiSelectBtn" class="flex-1 bg-[#007aff] hover:bg-blue-600 text-white font-black text-xs py-2.5 px-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
+                    <span>🚀 开始拼读与卡片练习</span>
+                    <span id="confirmBtnBadge" class="bg-white/20 text-white text-[9px] px-2 py-0.5 rounded-full font-bold">已选 0 个单元</span>
                 </button>
             </div>
         </div>
@@ -956,6 +975,7 @@
             mode: 'spell', 
             side: 'front',
             wordBank: [],
+            selectedUnitValues: [],
             wrongWords: [],
             vocabWords: [],
             masteredWords: new Set(),
@@ -1357,6 +1377,20 @@
             const group = localStorage.getItem('spell_saved_group');
             if (group && CONFIG.COURSE_DATA[group]) {
                 el.groupSelector.value = group;
+            }
+
+            const savedUnitsStr = localStorage.getItem('spell_saved_selected_units');
+            if (savedUnitsStr) {
+                try {
+                    const parsed = JSON.parse(savedUnitsStr);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        state.selectedUnitValues = parsed;
+                    }
+                } catch(e){}
+            }
+            if (!state.selectedUnitValues || state.selectedUnitValues.length === 0) {
+                const singleSaved = localStorage.getItem('spell_saved_unit') || 'data/unit1_lesson1.csv';
+                state.selectedUnitValues = [singleSaved];
             }
 
             const wrongs = localStorage.getItem('spell_saved_wrong_words');
@@ -3172,38 +3206,162 @@
         function onUnitChange() {
             state.isReviewMode = false;
             state.isVocabMode = false;
-            const currentUnit = el.unitSelector.value;
-            localStorage.setItem('spell_saved_unit', currentUnit);
-            
-            // Retrieve unit-specific progress if exists
-            const savedIndex = localStorage.getItem('spell_saved_index_' + currentUnit);
-            if (savedIndex !== null) {
-                localStorage.setItem('spell_saved_index', savedIndex);
-            } else {
-                localStorage.removeItem('spell_saved_index');
+            const currentUnit = el.unitSelector ? el.unitSelector.value : '';
+            if (currentUnit) {
+                state.selectedUnitValues = [currentUnit];
+                loadMultipleCSVs([currentUnit]);
             }
-            
-            // Update header button text with formatted title
-            const rawText = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
-            el.activeUnitName.textContent = formatUnitName(rawText);
-            loadCSV(currentUnit);
         }
 
         function updateUnitOptions(isInitial = false) {
-            const group = el.groupSelector.value;
+            const group = el.groupSelector ? el.groupSelector.value : 'newConcept';
             const units = CONFIG.COURSE_DATA[group] || [];
-            el.unitSelector.innerHTML = units.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
+            if (el.unitSelector) {
+                el.unitSelector.innerHTML = units.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
+            }
 
             if (isInitial) {
-                const saved = localStorage.getItem('spell_saved_unit');
-                if (saved && units.some(u => u.value === saved)) {
-                    el.unitSelector.value = saved;
+                if (!state.selectedUnitValues || state.selectedUnitValues.length === 0) {
+                    const saved = localStorage.getItem('spell_saved_unit') || 'data/unit1_lesson1.csv';
+                    state.selectedUnitValues = [saved];
                 }
+            } else if (el.unitSelector && el.unitSelector.value) {
+                state.selectedUnitValues = [el.unitSelector.value];
             }
             
-            const rawText = el.unitSelector.options[el.unitSelector.selectedIndex]?.text || "选择单元";
-            el.activeUnitName.textContent = formatUnitName(rawText);
-            loadCSV(el.unitSelector.value, isInitial);
+            loadMultipleCSVs(state.selectedUnitValues, isInitial);
+        }
+
+        async function loadMultipleCSVs(unitValues, isInitial = false) {
+            if (!unitValues || unitValues.length === 0) {
+                showLoadError("未选择任何单元");
+                return;
+            }
+            
+            const urls = Array.isArray(unitValues) ? unitValues : [unitValues];
+            state.selectedUnitValues = [...urls];
+            localStorage.setItem('spell_saved_selected_units', JSON.stringify(urls));
+            if (urls[0]) {
+                localStorage.setItem('spell_saved_unit', urls[0]);
+                if (el.unitSelector) el.unitSelector.value = urls[0];
+            }
+
+            try {
+                const fetchPromises = urls.map(async (url) => {
+                    if (state.parsedCsvCache[url]) {
+                        return state.parsedCsvCache[url];
+                    }
+                    const res = await fetch(url);
+                    if (!res.ok) return [];
+                    const text = await res.text();
+                    return new Promise((resolve) => {
+                        Papa.parse(text, {
+                            header: true,
+                            skipEmptyLines: true,
+                            fastMode: true,
+                            complete: r => {
+                                if (r.data?.length > 0) {
+                                    state.parsedCsvCache[url] = r.data;
+                                    resolve(r.data);
+                                } else {
+                                    resolve([]);
+                                }
+                            },
+                            error: () => resolve([])
+                        });
+                    });
+                });
+
+                const results = await Promise.all(fetchPromises);
+                let combinedWords = [];
+                results.forEach(list => {
+                    if (Array.isArray(list)) {
+                        combinedWords = combinedWords.concat(list);
+                    }
+                });
+
+                // Deduplicate words (case-insensitive)
+                const seen = new Set();
+                const uniqueWords = [];
+                combinedWords.forEach(w => {
+                    if (w && w.word) {
+                        const key = w.word.trim().toLowerCase();
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            uniqueWords.push(w);
+                        }
+                    }
+                });
+
+                if (uniqueWords.length === 0) {
+                    showLoadError("选中的单元没有有效单词");
+                    return;
+                }
+
+                processWordBankData(uniqueWords, isInitial);
+                updateActiveUnitNameHeader();
+            } catch (err) {
+                showLoadError("加载多单元词库失败");
+            }
+        }
+
+        function updateActiveUnitNameHeader() {
+            if (!el.activeUnitName) return;
+            const selected = state.selectedUnitValues || [];
+            if (selected.length === 0) {
+                el.activeUnitName.textContent = "未选择单元";
+                return;
+            }
+            if (selected.length === 1) {
+                let foundText = "";
+                for (const groupKey in CONFIG.COURSE_DATA) {
+                    const item = CONFIG.COURSE_DATA[groupKey].find(u => u.value === selected[0]);
+                    if (item) {
+                        foundText = item.text;
+                        break;
+                    }
+                }
+                el.activeUnitName.textContent = formatUnitName(foundText || selected[0]);
+            } else {
+                let groupName = "";
+                for (const groupKey in CONFIG.COURSE_DATA) {
+                    const allInGroup = selected.every(val => CONFIG.COURSE_DATA[groupKey].some(u => u.value === val));
+                    if (allInGroup) {
+                        const groupLabels = {
+                            newConcept: '🎒 新概念英语',
+                            schoolClass: '🏫 课堂同步组',
+                            ieltsClass: '🗽 雅思高频词'
+                        };
+                        groupName = groupLabels[groupKey] || '';
+                        break;
+                    }
+                }
+                if (groupName) {
+                    el.activeUnitName.textContent = `${groupName} (${selected.length} 单元合集)`;
+                } else {
+                    el.activeUnitName.textContent = `📚 跨课多选 (${selected.length} 单元合集)`;
+                }
+            }
+        }
+
+        async function applyMultiUnitSelection() {
+            if (!state.selectedUnitValues || state.selectedUnitValues.length === 0) {
+                showToast("⚠️ 请至少勾选 1 个单元进行练习");
+                return;
+            }
+
+            const modal = document.getElementById('courseSelectionModal');
+            if (modal) modal.classList.add('hidden');
+
+            state.isReviewMode = false;
+            state.isVocabMode = false;
+            state.isEbbinghausMode = false;
+
+            await loadMultipleCSVs(state.selectedUnitValues);
+
+            const count = state.selectedUnitValues.length;
+            const totalWords = state.wordBank ? state.wordBank.length : 0;
+            showToast(`📖 成功载入 ${count} 个单元 (共 ${totalWords} 词)！`);
         }
 
         // ==========================================
@@ -3263,11 +3421,9 @@
                     getAudioContext();
                     modal.classList.remove('hidden');
                     
-                    // Sync active tab to current selection group
                     const currentGroup = el.groupSelector ? el.groupSelector.value : 'newConcept';
                     switchCourseTab(currentGroup);
                     
-                    // Clear search on open
                     const searchInp = document.getElementById('courseSearchInput');
                     if (searchInp) searchInp.value = '';
                     courseSearchQuery = '';
@@ -3305,6 +3461,15 @@
             const courseUnitListContainer = document.getElementById('courseUnitList');
             if (courseUnitListContainer) {
                 courseUnitListContainer.addEventListener('click', (e) => {
+                    const singleBtn = e.target.closest('.quick-single-select-btn');
+                    if (singleBtn) {
+                        e.stopPropagation();
+                        const val = singleBtn.getAttribute('data-unit-value');
+                        state.selectedUnitValues = [val];
+                        applyMultiUnitSelection();
+                        return;
+                    }
+
                     const item = e.target.closest('.course-unit-item');
                     if (!item) return;
                     const unitValue = item.getAttribute('data-unit-value');
@@ -3314,16 +3479,45 @@
                         el.groupSelector.value = groupValue;
                         saveStorageDebounced('spell_saved_group', groupValue);
                     }
-                    if (el.unitSelector) {
-                        const unitsForGroup = CONFIG.COURSE_DATA[groupValue] || [];
-                        el.unitSelector.innerHTML = unitsForGroup.map(u => `<option value="${u.value}">${u.text}</option>`).join('');
-                        el.unitSelector.value = unitValue;
+
+                    if (!state.selectedUnitValues) state.selectedUnitValues = [];
+                    const idx = state.selectedUnitValues.indexOf(unitValue);
+                    if (idx > -1) {
+                        state.selectedUnitValues.splice(idx, 1);
+                    } else {
+                        state.selectedUnitValues.push(unitValue);
                     }
 
-                    onUnitChange();
-                    
-                    if (modal) modal.classList.add('hidden');
-                    showToast("📖 成功载入新单元！");
+                    renderCourseUnitsList();
+                });
+            }
+
+            // Multi-select toolbar action listeners
+            const selectAllBtn = document.getElementById('selectAllCategoryBtn');
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', () => {
+                    const unitsInGroup = CONFIG.COURSE_DATA[courseActiveTab] || [];
+                    const set = new Set(state.selectedUnitValues || []);
+                    unitsInGroup.forEach(u => set.add(u.value));
+                    state.selectedUnitValues = Array.from(set);
+                    renderCourseUnitsList();
+                    showToast("☑️ 已全选当前分类单元");
+                });
+            }
+
+            const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+            if (clearSelectionBtn) {
+                clearSelectionBtn.addEventListener('click', () => {
+                    state.selectedUnitValues = [];
+                    renderCourseUnitsList();
+                    showToast("🧹 已清空勾选");
+                });
+            }
+
+            const confirmMultiBtn = document.getElementById('confirmMultiSelectBtn');
+            if (confirmMultiBtn) {
+                confirmMultiBtn.addEventListener('click', () => {
+                    applyMultiUnitSelection();
                 });
             }
 
@@ -3360,37 +3554,20 @@
             const modalResetBtn = document.getElementById('modalResetProgressBtn');
             if (modalResetBtn) {
                 modalResetBtn.addEventListener('click', () => {
+                    (state.selectedUnitValues || []).forEach(val => {
+                        localStorage.removeItem('spell_saved_index_' + val);
+                    });
+                    localStorage.removeItem('spell_saved_index');
+                    state.currentIndex = 0;
                     resetAllProgress();
-                    if (modal) modal.classList.add('hidden');
+                    renderCourseUnitsList();
+                    showToast("🔄 已重置所选单元的学习进度");
                 });
             }
         }
 
         function switchCourseTab(group) {
             courseActiveTab = group;
-            const tabs = document.querySelectorAll('.course-category-tab');
-            
-            tabs.forEach(tab => {
-                const isMatch = tab.getAttribute('data-group') === group;
-                const activeBadge = tab.querySelector('.category-active-badge');
-                
-                if (isMatch) {
-                    tab.classList.remove('bg-white/70', 'dark:bg-white/5', 'border-black/5', 'dark:border-white/10');
-                    tab.classList.add('bg-white', 'dark:bg-[#2c2c2e]', 'border-blue-500', 'dark:border-blue-400', 'ring-2', 'ring-blue-500/20', 'shadow-md');
-                    if (activeBadge) {
-                        activeBadge.classList.remove('opacity-0');
-                        activeBadge.classList.add('opacity-100');
-                    }
-                } else {
-                    tab.classList.remove('bg-white', 'dark:bg-[#2c2c2e]', 'border-blue-500', 'dark:border-blue-400', 'ring-2', 'ring-blue-500/20', 'shadow-md');
-                    tab.classList.add('bg-white/70', 'dark:bg-white/5', 'border-black/5', 'dark:border-white/10');
-                    if (activeBadge) {
-                        activeBadge.classList.remove('opacity-100');
-                        activeBadge.classList.add('opacity-0');
-                    }
-                }
-            });
-
             renderCourseUnitsList();
         }
 
@@ -3415,6 +3592,71 @@
             return text;
         }
 
+        function updateMultiSelectToolbar() {
+            const selectedCount = (state.selectedUnitValues || []).length;
+            const counter = document.getElementById('multiSelectCounter');
+            const estimate = document.getElementById('multiSelectWordEstimate');
+            const confirmBadge = document.getElementById('confirmBtnBadge');
+            const confirmBtn = document.getElementById('confirmMultiSelectBtn');
+
+            if (counter) counter.textContent = `已选 ${selectedCount} 个单元`;
+            
+            let estCount = 0;
+            (state.selectedUnitValues || []).forEach(val => {
+                if (state.parsedCsvCache[val]) {
+                    estCount += state.parsedCsvCache[val].length;
+                } else {
+                    const cachedTotal = localStorage.getItem('spell_total_words_' + val);
+                    if (cachedTotal) {
+                        estCount += parseInt(cachedTotal);
+                    } else {
+                        estCount += 15;
+                    }
+                }
+            });
+
+            if (estimate) estimate.textContent = `~${estCount} 词`;
+            if (confirmBadge) confirmBadge.textContent = `已选 ${selectedCount} 个单元 (${estCount} 词)`;
+            if (confirmBtn) {
+                confirmBtn.disabled = selectedCount === 0;
+            }
+        }
+
+        function updateCategoryBadges() {
+            const selectedSet = new Set(state.selectedUnitValues || []);
+            const tabs = document.querySelectorAll('.course-category-tab');
+
+            tabs.forEach(tab => {
+                const group = tab.getAttribute('data-group');
+                const units = CONFIG.COURSE_DATA[group] || [];
+                const checkedCountInGroup = units.filter(u => selectedSet.has(u.value)).length;
+                const activeBadge = tab.querySelector('.category-active-badge');
+
+                if (group === courseActiveTab) {
+                    tab.classList.remove('bg-white/70', 'dark:bg-white/5', 'border-black/5', 'dark:border-white/10');
+                    tab.classList.add('bg-white', 'dark:bg-[#2c2c2e]', 'border-blue-500', 'dark:border-blue-400', 'ring-2', 'ring-blue-500/20', 'shadow-md');
+                } else {
+                    tab.classList.remove('bg-white', 'dark:bg-[#2c2c2e]', 'border-blue-500', 'dark:border-blue-400', 'ring-2', 'ring-blue-500/20', 'shadow-md');
+                    tab.classList.add('bg-white/70', 'dark:bg-white/5', 'border-black/5', 'dark:border-white/10');
+                }
+
+                if (activeBadge) {
+                    if (checkedCountInGroup > 0) {
+                        activeBadge.textContent = `已选 ${checkedCountInGroup}`;
+                        activeBadge.classList.remove('opacity-0');
+                        activeBadge.classList.add('opacity-100');
+                    } else if (group === courseActiveTab) {
+                        activeBadge.textContent = `当前页`;
+                        activeBadge.classList.remove('opacity-0');
+                        activeBadge.classList.add('opacity-100');
+                    } else {
+                        activeBadge.classList.remove('opacity-100');
+                        activeBadge.classList.add('opacity-0');
+                    }
+                }
+            });
+        }
+
         function renderCourseUnitsList() {
             const container = document.getElementById('courseUnitList');
             if (!container) return;
@@ -3429,17 +3671,18 @@
 
             if (filteredUnits.length === 0) {
                 container.innerHTML = `
-                    <div class="py-12 text-center text-gray-400 dark:text-gray-500 text-xs">
+                    <div class="py-12 text-center text-gray-400 dark:text-gray-500 text-xs col-span-full">
                         <span class="text-xl">📭</span>
                         <p class="mt-2 font-semibold">没有找到相关的课程或单元</p>
                     </div>
                 `;
+                updateMultiSelectToolbar();
+                updateCategoryBadges();
                 return;
             }
 
-            const currentActiveUnitValue = el.unitSelector ? el.unitSelector.value : '';
+            const selectedSet = new Set(state.selectedUnitValues || []);
 
-            // Optimization: Batch pre-read unit progress from localStorage into a local map
             const progressMap = {};
             filteredUnits.forEach(u => {
                 progressMap[u.value] = {
@@ -3449,45 +3692,50 @@
             });
 
             container.innerHTML = filteredUnits.map(u => {
-                const isCurrent = u.value === currentActiveUnitValue;
+                const isChecked = selectedSet.has(u.value);
                 let progressDesc = '未开始';
                 const pInfo = progressMap[u.value];
                 
-                if (isCurrent && state.wordBank?.length > 0) {
-                    const pct = state.wordBank.length ? Math.round((state.currentIndex / state.wordBank.length) * 100) : 0;
-                    progressDesc = `学习中: 已学至第 ${state.currentIndex + 1}/${state.wordBank.length} 词 (${pct}%)`;
-                } else if (pInfo && pInfo.savedIndex !== null) {
+                if (pInfo && pInfo.savedIndex !== null) {
                     if (pInfo.totalWords !== null) {
                         const pct = Math.round((parseInt(pInfo.savedIndex) / parseInt(pInfo.totalWords)) * 100);
-                        progressDesc = `已学习至第 ${parseInt(pInfo.savedIndex) + 1}/${pInfo.totalWords} 词 (${pct}%)`;
+                        progressDesc = `进度: 第 ${parseInt(pInfo.savedIndex) + 1}/${pInfo.totalWords} 词 (${pct}%)`;
                     } else {
-                        progressDesc = `已学习至第 ${parseInt(pInfo.savedIndex) + 1} 词`;
+                        progressDesc = `已学至第 ${parseInt(pInfo.savedIndex) + 1} 词`;
                     }
                 }
 
                 return `
-                    <div class="course-unit-item flex items-center justify-between p-3 ${isCurrent ? 'bg-blue-500/10 dark:bg-blue-500/15 border-blue-500/25' : 'bg-white dark:bg-[#2c2c2e] border-black/[0.04] dark:border-white/[0.04]'} hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded-2xl border transition-all cursor-pointer active:scale-[0.98]" data-unit-value="${u.value}" data-unit-group="${courseActiveTab}">
-                        <div class="flex items-center gap-2.5 min-w-0 text-left">
-                            <div class="w-7 h-7 flex items-center justify-center rounded-full ${isCurrent ? 'bg-[#007aff]/15 text-[#007aff]' : 'bg-black/[0.03] dark:bg-white/[0.05] text-xs'} flex-shrink-0 font-medium">
-                                ${isCurrent ? '⚡' : '📖'}
+                    <div class="course-unit-item flex items-center justify-between p-3 ${isChecked ? 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/50 dark:border-blue-400/50 ring-1 ring-blue-500/30' : 'bg-white dark:bg-[#2c2c2e] border-black/[0.04] dark:border-white/[0.04]'} hover:bg-black/[0.03] dark:hover:bg-white/[0.04] rounded-2xl border transition-all cursor-pointer active:scale-[0.98] relative group" data-unit-value="${u.value}" data-unit-group="${courseActiveTab}">
+                        <div class="flex items-center gap-2.5 min-w-0 text-left flex-1">
+                            <div class="w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isChecked ? 'bg-[#007aff] text-white shadow-xs' : 'border-2 border-gray-300 dark:border-gray-600 bg-black/5 dark:bg-white/5 text-transparent'} flex-shrink-0 text-xs font-black">
+                                ✓
                             </div>
-                            <div class="min-w-0">
-                                <h4 class="text-[10px] font-black ${isCurrent ? 'text-[#007aff] dark:text-[#0a84ff]' : 'text-gray-800 dark:text-gray-100'} truncate">${formatUnitName(u.text)}</h4>
-                                <p class="text-[8px] text-gray-400 dark:text-gray-500 font-semibold mt-0.5">${progressDesc}</p>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-[10px] sm:text-xs font-black ${isChecked ? 'text-[#007aff] dark:text-[#0a84ff]' : 'text-gray-800 dark:text-gray-100'} truncate">${formatUnitName(u.text)}</h4>
+                                <p class="text-[8px] sm:text-[9px] text-gray-400 dark:text-gray-500 font-semibold mt-0.5">${progressDesc}</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                            ${isCurrent ? `
-                                <span class="text-[8px] font-black text-[#007aff] dark:text-[#0a84ff] bg-[#007aff]/10 dark:bg-[#0a84ff]/15 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                                    正在学
+                        <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                            <button class="quick-single-select-btn text-[8px] font-bold text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-md transition-all opacity-0 group-hover:opacity-100" data-unit-value="${u.value}" title="仅单选学习此单元">
+                                单选
+                            </button>
+                            ${isChecked ? `
+                                <span class="text-[8px] font-black text-[#007aff] dark:text-[#0a84ff] bg-[#007aff]/15 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                    已勾选
                                 </span>
                             ` : `
-                                <span class="text-[10px] text-gray-300 dark:text-gray-600">❯</span>
+                                <span class="text-[8px] font-medium text-gray-400 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                                    + 勾选
+                                </span>
                             `}
                         </div>
                     </div>
                 `;
             }).join('');
+
+            updateMultiSelectToolbar();
+            updateCategoryBadges();
         }
 
         function toggleHint() { 
